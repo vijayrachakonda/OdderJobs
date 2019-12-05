@@ -2,21 +2,11 @@
     <head>
         <title>OdderJobs - Index</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css">
+        <link rel="stylesheet" href="style.css">
     </head>
     <body>
-        <nav class="navbar is-primary" role="navigation" aria-label="main navigation">
-            <div class="navbar-menu">
-                <div class="navbar-start">
-                    <div class="navbar-item">OdderJobs</div>
-                    <div class="navbar-item">Job Listings</div>
-                    <div class="navbar-item">Profile</div>
-                </div>
-                <div class="navbar-end">
-                    <div class="navbar-item">Logout</div>
-                </div>
-            </div>
-        </nav>
-        <h1 class="title">Job Listings</h1>
+        <nav id="navbar-root" class="navbar is-info" role="navigation" aria-label="main navigation"></nav>
+        <h1 class="title"></h1>
         <table class="table">
             <thead>
                 <tr>
@@ -31,21 +21,23 @@
                     <td>Lawn Mowing</td>
                     <td>Will probably take an hour. Pay is $20.</td>
                     <td>Nick C.</td>
-                    <td><button class="button is-primary">Accept</button></td>
+                    <td><button class="button is-info">Accept</button></td>
                 </tr>
                 <tr>
                     <td>House Cleaning</td>
                     <td>Looking for bi-weekly service. Price negotiable.</td>
                     <td>Vijay R.</td>
-                    <td><button class="button is-primary">Accept</button></td>
+                    <td><button class="button is-info">Accept</button></td>
                 </tr>
                 <tr>
                     <td>Garage Art</td>
                     <td>Looking to commission a talented local artist.</td>
                     <td>Chris Z.</td>
-                    <td><button class="button is-primary">Accept</button></td>
+                    <td><button class="button is-info">Accept</button></td>
                 </tr>
             </tbody>
         </table>
+    <script src="../node_modules/jquery/dist/jquery.js"></script>
+    <script src="app.js"></script>
     </body>
 </html>

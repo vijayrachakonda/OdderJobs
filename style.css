@@ -1,0 +1,9 @@
+@charset "UTF-8";
+
+.navlink {
+    color:white
+}
+
+.navlink:hover {
+    color:#D3D3D3
+}

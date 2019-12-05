@@ -1,0 +1,23 @@
+{
+  "name": "odderjobs",
+  "version": "1.0.0",
+  "description": "OdderJobs will be an easy to use platform for connecting people who need odd jobs completed with skilled non-professionals. The platform distinguishes itself from similar sites by cutting out overhead and connecting “employers” directly to workers.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/njcolvin/OdderJobs.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/njcolvin/OdderJobs/issues"
+  },
+  "homepage": "https://github.com/njcolvin/OdderJobs#readme",
+  "dependencies": {
+    "browser-sync": "^2.26.7",
+    "jquery": "^3.4.1"
+  }
+}
