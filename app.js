@@ -11,6 +11,7 @@ const renderNavbar = function(loggedIn) {
                         <div class="navbar-start">
                             <div class="navbar-item"><a class="navlink">Profile</a></div>
                             <div class="navbar-item"><a class="navlink" href="/messages.html">Messages</a></div>
+                            <div class="navbar-item"><a class="navlink" href="/post-job-page.html">Post Job</a></div>
                         </div>
                     <div class="navbar-end">
                         <div class="navbar-item"><a class="navlink">Logout</a></div>

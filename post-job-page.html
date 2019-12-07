@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang = "en">
+    <head>
+        <title>OdderJobs - Post job </title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css">
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <nav id="navbar-root" class="navbar is-info" role="navigation" aria-label="main navigation"></nav>
+        <section class = "section">
+            <h1 class = "title">Post your Job!</h1>
+            <div class="field">
+                <label class="label">Job Title</label>
+                <div class="control">
+                    <input class="input" type="text" placeholder="e.g. Looking for someone to paint my garage">
+                </div>
+            </div>
+            <div class = "field is-horizontal">
+                <div class = "field-body">
+                    <div class="field" id = "street-addy">
+                        <label class="label">Street Address</label>
+                        <div class="control">
+                            <input class="input" type="text" placeholder="e.g. 123 Hello Dr.">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="label">Town</label>
+                        <div class="control">
+                            <input class="input" type="text" placeholder="e.g. Chapel Hill">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="label">Zip Code</label>
+                        <div class="control">
+                            <input class="input" type="text" placeholder="e.g. 33333">
+                        </div>
+                    </div>
+                </div>    
+            </div>
+            <div class="field">
+                <label class="label">Job Description</label>
+                <div class="control">
+                    <textarea class="textarea" placeholder="e.g. Type up a description of the job you're posting"></textarea>
+                </div>
+            </div>
+            <div class="field">
+                <div class="control">
+                    <button class="button is-primary">
+                        Submit posting
+                    </button>
+                </div>
+            </div>
+        </section>
+    <script src="../node_modules/jquery/dist/jquery.js"></script>
+    <script src="app.js"></script>
+    </body>
+</html>
