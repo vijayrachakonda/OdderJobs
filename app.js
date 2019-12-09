@@ -1,7 +1,7 @@
 const localStorage = window.localStorage;
 const pubRoot = new axios.create({baseurl:"http://localhost:3000/public"});
 const privateRoot = new axios.create({baseurl:"http://localhost:3000/private"});
-const userRoot = new axios.create({baseurl:"http://localhost:3000/account"});
+const userRoot = new axios.create({baseurl:"http://localhost:3000/user"});
 
 const renderNavbar = function(loggedIn) {
     let element = '';
@@ -13,6 +13,7 @@ const renderNavbar = function(loggedIn) {
                         <div class="navbar-start">
                             <div class="navbar-item"><a class="navlink">Profile</a></div>
                             <div class="navbar-item"><a class="navlink" href="/jobs.html">Jobs</a></div>
+                            <div class="navbar-item"><a class="navlink" href="/messages.html">Messages</a></div>
                         </div>
                     <div class="navbar-end">
                         <div class="navbar-item"><a class="navlink">Logout</a></div>
@@ -35,20 +36,66 @@ const renderNavbar = function(loggedIn) {
     navroot.append(element);
 }
 
-const renderMessages = function(messages) {
+const handleMessages = function(jobId) {
+    $(document.body).on("click", "#".concat(jobId, "-send"), function() {
+        let value = $("#".concat(jobId, '-newMsg')).val();
+        $("#".concat(jobId, '-newMsg')).val('');
+        sendM
+    });
+}
+
+const renderMessages = function(jobs, username) {
     const messageroot = $("#messages-root");
-    const jobroot = $("#jobs-root");
-    for(let i = 0; i < messages.length; i++) {
-        let message = messages[i]
-        let element = `<div class="box" id="`.concat(messages.id, `"><div class="media content"><span class="sender"><strong>`, message.from.name, 
-        `</strong></span></div><div class="content"><span id="`, message.id, `-body">`, message.body, `</span></div></div>`);
-        jobroot.append(element);
+    for(let i = 0; i < jobs.length; i++) {
+        let messages = jobs[i].messages;
+        let last = messages[messages.length - 1];
+        messageroot.append(`<div id="`.concat(jobs[i].id, `-chat" class="box"><div class="media content">`,`<span class="jobTitle"><strong>`,
+            jobs[i].title, `</strong>,<i> `, messages[0].from.name, `</i></span></div><div class="content"><span><i>`, last.time,`\t\t</i></span>`, `<span><strong>`, last.from.name,
+            '</strong>: ', last.body, `</span></div><span class="icon"><i id="`, jobs[i].id, `-arrow" style="color:#0B93F6" class="fas fa-arrow-down"></i></span></div></div>
+            <div id="`, jobs[i].id, `-msgs" class="box" style="margin:0 auto;overflow:scroll;width:500px;height:500px"></div>`));
+        $("#".concat(jobs[i].id, "-msgs")).hide();
+        $("#".concat(jobs[i].id,"-chat")).on("click", function() {
+            if($("#".concat(jobs[i].id, "-arrow")).hasClass('fas fa-arrow-down')) {
+                $("#".concat(jobs[i].id, "-arrow")).removeClass('fas fa-arrow-down');
+                $("#".concat(jobs[i].id, "-arrow")).addClass('fas fa-arrow-up');
+            } else {
+                $("#".concat(jobs[i].id, "-arrow")).removeClass('fas fa-arrow-up');
+                $("#".concat(jobs[i].id, "-arrow")).addClass('fas fa-arrow-down');
+            }
+            $("#".concat(jobs[i].id, "-msgs")).empty();
+            $("#".concat(jobs[i].id, "-msgs")).toggle();
+            for(let j = 0; j < messages.length; j++) {
+                let message = messages[j];
+                let element = '';
+                if(message.from.name === username) {
+                    if(j > 0 && messages[j - 1].from.name === message.from.name) {
+                        element = `<div class="content" style="margin-top:0px;float:right;clear:both;"><p class="from-me">`.concat(message.body, `</span></div>`);
+                    } else {
+                        element = `<div class="media content" style="margin-bottom:0px;float:right;clear:both"><span><strong>`.concat(message.from.name, 
+                            `</strong></span></div><div style="margin-top:0px;float:right;clear:both" class="content"><p class="from-me">`, message.body, `</span></div>`);
+                    }
+                }
+                else {
+                    if(j > 0 && messages[j - 1].from.name === message.from.name) {
+                        element = `<div class="content" style="margin-top:0px;float:left;clear:both;"><p class="from-them">`.concat(message.body, `</span></div>`);
+                    } else {
+                        element = `<div class="media content" style="margin-bottom:0px;float:left;clear:both"><span><strong>`.concat(message.from.name, 
+                            `</strong></span></div><div style="margin-top:0px;float:left;clear:both" class="content"><p class="from-them">`, message.body, `</span></div>`);
+                    }
+                }
+                $("#".concat(jobs[i].id, "-msgs")).append(element);
+            }
+            $("#".concat(jobs[i].id, "-msgs")).append(`<div class="send-message" id="`.concat(jobs[i].id, `-input" style="position:sticky;top:0;display:inline;white-space:nowrap;"></div>`));
+            $("#".concat(jobs[i].id, "-input")).append(`<input id="`.concat(jobs[i].id, `-newMsg" style="width:90%;" class="input" type="text" placeholder="Send a message..."/>`));
+            $("#".concat(jobs[i].id, "-input")).append(`<button id="`.concat(jobs[i].id, `-send" style="width:10%;" class="button is-info"><span class="icon"><i class="fas fa-paper-plane"></i></span></button>`));
+        });
+        handleMessages(jobs[i].id);
     }
 }
 
 async function createJob(username, job) {
     const pubResult = await pubRoot.post('http://localhost:3000/public/'.concat(username,'/jobs'), {
-        "data": [{"title":job.title,"description":job.description}],
+        "data": [{"id":job.id,"title":job.title,"description":job.description}],
         "type": "merge"
     });
     const privResult = await axios({
@@ -57,6 +104,7 @@ async function createJob(username, job) {
         headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))},
         data: {
             "data": {
+                "id":job.id,
                 "title":job.title,
                 "description":job.description,
                 "accepted":false
@@ -69,6 +117,7 @@ async function createJob(username, job) {
         headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))},
         data: {
             "data": {
+                "id":job.id,
                 "title":job.title,
                 "description":job.description,
                 "accepted":false,
@@ -80,6 +129,11 @@ async function createJob(username, job) {
                     }
                 }, {"time":"test time 2",
                     "body":"test response",
+                    "from":{
+                        "name":username
+                    }
+                }, {"time":"test time 3",
+                    "body":"test message...",
                     "from":{
                         "name":username
                     }
@@ -104,13 +158,23 @@ async function deleteJob(username, id) {
     });
 }
 
-async function getMessages(id) {
-    const job = await pubRoot.get('/jobs/'.concat(id));
-    renderMessages(job.data.result.messages);
+async function getMessages(username) {
+    const userData = await userRoot.get('http://localhost:3000/user/', {
+        headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
+    });
+    let jobIds = userData.data.result;
+    let jobs = [];
+    for(let i = 0; i < jobIds.length; i++) {
+        const job = await userRoot.get('http://localhost:3000/user/'.concat(jobIds[i]), {
+            headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
+        });
+        jobs[i] = job.data.result;
+    }
+    renderMessages(jobs, username);
 }
 
 async function createUser(user) {
-    const result = await axios({
+    return await axios({
         method:'POST',
         url:'http://localhost:3000/account/create',
         data: {
@@ -119,7 +183,6 @@ async function createUser(user) {
             "data": {"email":user.email}
         }
     });
-    console.log(result.data);
 }
 
 async function loginUser(user) {
@@ -136,10 +199,14 @@ async function loginUser(user) {
 }
 
 $(function() {
-    let user = {name:"Nick", pass:"pass123",email:"Nick@nick.com"};
+    renderNavbar(true);
+    let user = {name:"nick", pass:"pass123",email:"Nick@nick.com"};
+    let user2 = {name:"bob", pass:"pass123",email:"Bob@bob.com"};
     let job = {id:"2", title: "Test title 2", description:"Test description 2."};
+    let job2 = {id:"3", title: "Test title 3", description:"Test description 3."};
     //createUser(user);
-    loginUser(user);
-    createJob('Nick', job);
+    //loginUser(user);
+    //createJob('Nick', job2);
+    getMessages('Nick');
     //deleteJob('nick','1');
 });
