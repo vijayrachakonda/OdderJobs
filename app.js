@@ -140,6 +140,7 @@ $(function() {
     let job = {id:"2", title: "Test title 2", description:"Test description 2."};
     //createUser(user);
     loginUser(user);
-    createJob('Nick', job);
+    //createJob('Nick', job);
+    renderNavbar();
     //deleteJob('nick','1');
 });
