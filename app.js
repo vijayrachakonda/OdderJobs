@@ -48,7 +48,15 @@ const renderMessages = function(messages) {
     }
 }
 
-const findId = function(id) {
+async function getUser() {
+    const userData = await userRoot.get('http://localhost:3000/user/', {
+        headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
+    });
+    let name = userData.data.name;
+    return name;
+}
+
+async function findId(id) {
     const userData = await userRoot.get('http://localhost:3000/user/', {
         headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
     });
@@ -62,9 +70,6 @@ const findId = function(id) {
 }
 
 const submitPostingEventHandler = function(event) {
-    const userData = await userRoot.get('http://localhost:3000/user/', {
-        headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
-    });
     id = Math.floor((Math.random() * 100) + 1);
     id = find(id);
     let job = {
@@ -75,7 +80,7 @@ const submitPostingEventHandler = function(event) {
         town: $('#town').val(),
         zip: $('#zip').val(),    
     }
-    createJob('Nick', job);
+    createJob(getUser(), job);
 }
 
 async function createJob(username, job) {
