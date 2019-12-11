@@ -48,9 +48,22 @@ const renderMessages = function(messages) {
     }
 }
 
+const submitPostingEventHandler = function(event) {
+    let job = {
+        title: $('#title').val(),
+        description: $('#description').val(),
+        address: $('#address').val(),
+        town: $('#town').val(),
+        zip: $('#zip').val(),
+        accepted: false        
+    }
+    console.log("was called.");
+    createJob('Nick', job);
+}
+
 async function createJob(username, job) {
     const pubResult = await pubRoot.post('http://localhost:3000/public/'.concat(username,'/jobs'), {
-        "data": [{"title":job.title,"description":job.description}],
+        "data": [{"title":job.title,"description":job.description, "address": job.address, "town": job.town, "zip": job.zip}],
         "type": "merge"
     });
     const privResult = await axios({
@@ -61,6 +74,9 @@ async function createJob(username, job) {
             "data": {
                 "title":job.title,
                 "description":job.description,
+                "address": job.address,
+                "town": job.town,
+                "zip": job.zip,
                 "accepted":false
             }
         }
@@ -73,6 +89,9 @@ async function createJob(username, job) {
             "data": {
                 "title":job.title,
                 "description":job.description,
+                "address": job.address,
+                "town": job.town,
+                "zip": job.zip,
                 "accepted":false,
                 "messages":[{
                     "time":"Test time",
@@ -137,11 +156,17 @@ async function loginUser(user) {
     return result;
 }
 
+
+
 $(function() {
+    const $formroot = $('#f-container');
     let user = {name:"Nick", pass:"pass123",email:"Nick@nick.com"};
-    let job = {id:"2", title: "Test title 2", description:"Test description 2."};
-    //createUser(user);
+    let job = {id:"2", title: "Test title 2", description:"Test description 2.", address:"sd", town:"sld", zip:"sdf"};
+    // createUser(user);
     loginUser(user);
-    createJob('Nick', job);
+    // createJob('Nick', job);
+    // console.log("did it!");
+    $formroot.on('click', ".button.is-primary", submitPostingEventHandler);
     //deleteJob('nick','1');
+    renderNavbar(true);
 });
