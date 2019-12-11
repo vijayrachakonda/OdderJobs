@@ -159,14 +159,23 @@ async function loginUser(user) {
 
 
 $(function() {
-    const $formroot = $('#f-container');
     let user = {name:"Nick", pass:"pass123",email:"Nick@nick.com"};
     let job = {id:"2", title: "Test title 2", description:"Test description 2.", address:"sd", town:"sld", zip:"sdf"};
     // createUser(user);
     loginUser(user);
-    // createJob('Nick', job);
+    createJob('Nick', job);
     // console.log("did it!");
-    $formroot.on('click', ".button.is-primary", submitPostingEventHandler);
-    //deleteJob('nick','1');
+    $(document.body).on("click", "#submit", function() {
+        let job = {
+            title: $('#title').val(),
+            description: $('#description').val(),
+            address: $('#address').val(),
+            town: $('#town').val(),
+            zip: $('#zip').val(),
+            accepted: false        
+        }
+        // if (createJob('Nick', job))
+    });
+    // deleteJob('nick','1');
     renderNavbar(true);
 });
