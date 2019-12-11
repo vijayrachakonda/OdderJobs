@@ -49,15 +49,15 @@ const renderMessages = function(messages) {
 }
 
 const submitPostingEventHandler = function(event) {
+    id = Math.floor((Math.random() * 100) + 1).toString();
     let job = {
+        id: id,
         title: $('#title').val(),
         description: $('#description').val(),
         address: $('#address').val(),
         town: $('#town').val(),
-        zip: $('#zip').val(),
-        accepted: false        
+        zip: $('#zip').val(),    
     }
-    console.log("was called.");
     createJob('Nick', job);
 }
 
@@ -165,17 +165,7 @@ $(function() {
     loginUser(user);
     createJob('Nick', job);
     // console.log("did it!");
-    $(document.body).on("click", "#submit", function() {
-        let job = {
-            title: $('#title').val(),
-            description: $('#description').val(),
-            address: $('#address').val(),
-            town: $('#town').val(),
-            zip: $('#zip').val(),
-            accepted: false        
-        }
-        // if (createJob('Nick', job))
-    });
+    $(document.body).on("click", "#submit", submitPostingEventHandler);
     // deleteJob('nick','1');
     renderNavbar(true);
 });
