@@ -48,9 +48,25 @@ const renderMessages = function(messages) {
     }
 }
 
+const findId = function(id) {
+    const userData = await userRoot.get('http://localhost:3000/user/', {
+        headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
+    });
+    let jobIds = userData.data.result;
+    if ($.inArray(id, jobIds) == -1) {
+        return id.toString();
+    } else {
+        id = Math.floor((Math.random() * 1000) + 1);
+        return findId(id);
+    }
+}
+
 const submitPostingEventHandler = function(event) {
-    // currentUser = localStorage.getItem('jwt')
-    id = Math.floor((Math.random() * 100) + 1).toString();
+    const userData = await userRoot.get('http://localhost:3000/user/', {
+        headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
+    });
+    id = Math.floor((Math.random() * 100) + 1);
+    id = find(id);
     let job = {
         id: id,
         title: $('#title').val(),
