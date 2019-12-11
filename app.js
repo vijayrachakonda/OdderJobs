@@ -49,6 +49,7 @@ const renderMessages = function(messages) {
 }
 
 const submitPostingEventHandler = function(event) {
+    // currentUser = localStorage.getItem('jwt')
     id = Math.floor((Math.random() * 100) + 1).toString();
     let job = {
         id: id,
@@ -163,6 +164,8 @@ $(function() {
     let job = {id:"2", title: "Test title 2", description:"Test description 2.", address:"sd", town:"sld", zip:"sdf"};
     // createUser(user);
     loginUser(user);
+    // let currentUser = JSON.parse(localStorage.getItem('jwt'));
+    // console.log(currentUser);
     createJob('Nick', job);
     // console.log("did it!");
     $(document.body).on("click", "#submit", submitPostingEventHandler);
