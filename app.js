@@ -170,14 +170,6 @@ async function findId() {
     return id.toString();
 }
 
-async function getUser() {
-    const userData = await userRoot.get('http://localhost:3000/account/status', {
-        headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
-    });
-    let username = userData.data.user.name;
-    return username;
-}
-
 
 async function submitPostingEventHandler(event) {
     let job = {
@@ -388,7 +380,10 @@ $(async function() {
         renderNavbar(false);
     } else {
         renderNavbar(true);
-        getMessages(getUser());
+    }
+
+    if (window.location.href.includes("/messages")) {
+        getMessages(await getUser());
     }
     //deleteJob('nick','1');
     $("#cancelButton").click(toggleLogin);
