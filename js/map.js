@@ -27,10 +27,24 @@ async function handleRespondToJob(id, jobList) {
         url:'http://localhost:3000/user/acceptedJobs',
         headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))},
         data: {
-            "data": {
-                "id":jobList.id,
-            },
+            "data": [jobList.id],
             "type": "merge"
+        }
+    });
+
+    const accepted = await axios({
+        method:"POST",
+        url:'http://localhost:3000/private/jobs/'.concat(jobList.id),
+        headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))},
+        data: {
+            "data": {"id": jobList.id,
+                    "title": jobList.title,
+                    "description": jobList.description,
+                    "address": jobList.address,
+                    "state": jobList.state,
+                    "town": jobList.town,
+                    "accepted": true,
+                    "postedBy": jobList.postedBy},
         }
     });
 

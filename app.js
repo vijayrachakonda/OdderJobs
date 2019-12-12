@@ -11,7 +11,6 @@ const renderNavbar = function(loggedIn) {
                 </div>
                 <div class="navbar-menu">
                         <div class="navbar-start">
-                            <div class="navbar-item"><a class="navlink">Profile</a></div>
                             <div class="navbar-item"><a class="navlink" href="/messages.html">Messages</a></div>
                             <div class="navbar-item"><a class="navlink" href="/post-job-page.html">Post Job</a></div>
                             <div class="navbar-item"><a class="navlink" href="/jobs.html">Jobs</a></div>
@@ -183,12 +182,15 @@ export async function getUser() {
 
 
 async function findId() {
-    const userData = await userRoot.get('http://localhost:3000/user/', {
+    const userData = await userRoot.get('http://localhost:3000/private/jobs', {
         headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
     });
     let jobIds = userData.data.result;
-    let id = jobIds.length;
-    return id.toString();
+    let size = 0;
+    for (let key in jobIds) {
+        if (jobIds.hasOwnProperty(key)) size++;
+    }
+    return size.toString();
 }
 
 
@@ -212,7 +214,6 @@ async function submitPostingEventHandler(event) {
 
 const getCoordinates= async (job) => {
     let address = job.address.split(" ");
-    console.log(address);
     let formattedAddress = "";
     address.forEach(function(word) {
         formattedAddress += word;
@@ -281,15 +282,11 @@ async function createJob(username, job) {
         url:'http://localhost:3000/user/postedJobs',
         headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))},
         data: {
-            "data": {
-                "id":job.id,
-            },
+            "data": [job.id],
             "type": "merge"
         }
     });
 }
-
-
 
 async function deleteJob(username, id) {
     const pubResult = await axios({
@@ -302,11 +299,24 @@ async function deleteJob(username, id) {
         headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))},
 
     });
-    const userResult = await axios({
-        method:'DELETE',
-        url:'http://localhost:3000/user/'.concat(username, '/postedJobs','[', id,']','/', id),
+    const getJobList = await axios({
+        method:'GET',
+        url:'http://localhost:3000/user/postedJobs',
         headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))},
     });
+    let jobs = getJobList.data.result;
+    let indexOf = -1;
+    for(let i=0;i<jobs.length;i++) {
+        if(jobs[i] == id) indexOf = i;
+    }
+    jobs.splice(indexOf, 1);
+    const newJobList = await axios({
+        method:'POST',
+        url:'http://localhost:3000/user/postedJobs',
+        headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))},
+        data: {"data":jobs}
+    });
+    location.reload();
 }
 
 async function getMessages() {
@@ -344,13 +354,13 @@ async function getMessages() {
     let jobs = [];
     //console.log(acceptedJobs.data.result); 
     acceptedJobs.data.result.forEach(function(job) {
-         jobs.push(job.id);
+         jobs.push(job);
     });
     postedJobs.data.result.forEach(function(job) {
-        jobs.push(job.id);
+        jobs.push(job);
    });
     for(let i = 0; i < jobs.length; i++) {
-        const job = await userRoot.get('http://localhost:3000/private/jobs/'.concat(jobs[i]), {
+        const job = await privateRoot.get('http://localhost:3000/private/jobs/'.concat(jobs[i]), {
             headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
         });
         jobs[i] = job.data.result;
@@ -368,36 +378,166 @@ async function getMessages() {
     renderJobsPage(jobs, username);
 }
 
+async function getJobs() {
+    let acceptedJobs, postedJobs;
+    try {
+        acceptedJobs = await axios({
+            method: "GET",
+            url: 'http://localhost:3000/user/acceptedJobs',
+            headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
+        });
+    } catch (error) {
+        acceptedJobs = {
+            "data": {
+                "result": []
+            }
+        }
+    }
+    try {
+        postedJobs = await axios({
+            method: "GET",
+            url: 'http://localhost:3000/user/postedJobs',
+            headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
+        });
+    } catch (error) {
+        postedJobs = {
+            "data": {
+                "result": []
+            }
+        }
+    }
+    const loggedIn = await userRoot.get('http://localhost:3000/account/status', {
+        headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
+    });
+    let username = loggedIn.data.user.name;
+    let jobs = [];
+    //console.log(acceptedJobs.data.result);
+    acceptedJobs.data.result.forEach(function(job) {
+         jobs.push(job);
+    });
+    postedJobs.data.result.forEach(function(job) {
+        jobs.push(job);
+    });
+    let acceptedJobObjs = [];
+    let postedJobObjs = [];
+    for(let i = 0; i < jobs.length; i++) {
+        const job = await privateRoot.get('http://localhost:3000/private/jobs/'.concat(jobs[i]), {
+            headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
+        });
+        if(job.data.result.postedBy == username) postedJobObjs.push(job.data.result);
+        else acceptedJobObjs.push(job.data.result);
+    }
+    renderJobsPage(acceptedJobObjs, postedJobObjs, username);
+}
 
 
-function renderJobsPage(jobs, username) {
+
+function renderJobsPage(acceptedJobs, postedJobs, username) {
     const jobroot = $("#jobs-root");
-    for (let i = 0; i < jobs.length; i++) {
+    for (let i = 0; i < postedJobs.length; i++) {
+        if(postedJobs[i].accepted) {
+            jobroot.append(`<div class="card">
+                <header class="card-header">
+                    <p class="card-header-title">
+                        Title: ${postedJobs[i].title}
+                    </p>
+                </header>
+                <div class="card-content">
+                    <div class="content" id="${postedJobs[i].id}-content">
+                        <p><strong>Title: </strong> <div id="${postedJobs[i].id}-title">${postedJobs[i].title}</div></p>
+                        <p><strong>Description: </strong> <div id="${postedJobs[i].id}-desc">${postedJobs[i].description}</div></p>
+                        <p><strong>Address: </strong> <div id="${postedJobs[i].id}-address">${postedJobs[i].address}</div></p>
+                        <p><strong>State: </strong> <div id="${postedJobs[i].id}-state"> ${postedJobs[i].state}</div></p>
+                        <p><strong>Town: </strong> <div id="${postedJobs[i].id}-town">${postedJobs[i].town}</div></p>
+                    </div>
+                    
+                </div>
+                <footer class="card-footer">
+                    <a href="#" id="job-edit-${postedJobs[i].id}" class="card-footer-item">Edit</a>
+                </footer>
+            </div>`);
+            $("#job-edit-".concat(postedJobs[i].id)).on("click", async function() {
+                $("#".concat(postedJobs[i].id, "-title")).replaceWith(`<input id="${postedJobs[i].id}-title" type="text" value="${postedJobs[i].title}" />`);
+                $("#".concat(postedJobs[i].id, "-desc")).replaceWith(`<input id="${postedJobs[i].id}-desc" type="text" value="${postedJobs[i].description}" />`);
+                $("#".concat(postedJobs[i].id, "-address")).replaceWith(`<input id="${postedJobs[i].id}-address" type="text" value="${postedJobs[i].address}" />`);
+                $("#".concat(postedJobs[i].id, "-state")).replaceWith(`<input id="${postedJobs[i].id}-state" type="text" value="${postedJobs[i].state}" />`);
+                $("#".concat(postedJobs[i].id, "-town")).replaceWith(`<input id="${postedJobs[i].id}-town" type="text" value="${postedJobs[i].town}" />`);
+                $("#".concat(postedJobs[i].id, "-content")).append(`<button id="${postedJobs[i].id}-submit">Submit</button>`);
+                $("#".concat(postedJobs[i].id, "-submit")).on("click", async function() {
+                    let newTitle = $("#".concat(postedJobs[i].id, "-title")).val();
+                    let newDesc = $("#".concat(postedJobs[i].id, "-desc")).val();
+                    let newAddr = $("#".concat(postedJobs[i].id, "-address")).val();
+                    let newState = $("#".concat(postedJobs[i].id, "-state")).val();
+                    let newTown = $("#".concat(postedJobs[i].id, "-town")).val();
+                    let newJob = {"id":postedJobs[i].id,"title":newTitle,"description":newDesc,"address":newAddr,"state":newState,"town":newTown};
+                    await createJob(postedJobs[i].id, newJob);
+                    location.reload();
+                });
+            });
+        } else {
+            jobroot.append(`<div class="card">
+                <header class="card-header">
+                    <p class="card-header-title">
+                        Title: ${postedJobs[i].title}
+                    </p>
+                </header>
+                <div class="card-content">
+                    <div class="content" id="${postedJobs[i].id}-content">
+                    <p><strong>Title: </strong> <div id="${postedJobs[i].id}-title">${postedJobs[i].title}</div></p>
+                    <p><strong>Description: </strong> <div id="${postedJobs[i].id}-desc">${postedJobs[i].description}</div></p>
+                    <p><strong>Address: </strong> <div id="${postedJobs[i].id}-address">${postedJobs[i].address}</div></p>
+                    <p><strong>State: </strong> <div id="${postedJobs[i].id}-state"> ${postedJobs[i].state}</div></p>
+                    <p><strong>Town: </strong> <div id="${postedJobs[i].id}-town">${postedJobs[i].town}</div></p>
+                    </div>
+                    
+                </div>
+                <footer class="card-footer">
+                    <a href="#" id="job-edit-${postedJobs[i].id}" class="card-footer-item">Edit</a>
+                    <a href="#" id="job-delete-${postedJobs[i].id}" class="card-footer-item">Delete</a>
+                </footer>
+            </div>`);
+            $("#job-delete-".concat(postedJobs[i].id)).on("click", async function() {
+                await deleteJob(username, postedJobs[i].id);
+            });
+            $("#job-edit-".concat(postedJobs[i].id)).on("click", async function() {
+                $("#".concat(postedJobs[i].id, "-title")).replaceWith(`<input id="${postedJobs[i].id}-title" type="text" value="${postedJobs[i].title}" />`);
+                $("#".concat(postedJobs[i].id, "-desc")).replaceWith(`<input id="${postedJobs[i].id}-desc" type="text" value="${postedJobs[i].description}" />`);
+                $("#".concat(postedJobs[i].id, "-address")).replaceWith(`<input id="${postedJobs[i].id}-address" type="text" value="${postedJobs[i].address}" />`);
+                $("#".concat(postedJobs[i].id, "-state")).replaceWith(`<input id="${postedJobs[i].id}-state" type="text" value="${postedJobs[i].state}" />`);
+                $("#".concat(postedJobs[i].id, "-town")).replaceWith(`<input id="${postedJobs[i].id}-town" type="text" value="${postedJobs[i].town}" />`);
+                $("#".concat(postedJobs[i].id, "-content")).append(`<button id="${postedJobs[i].id}-submit">Submit</button>`);
+                $("#".concat(postedJobs[i].id, "-submit")).on("click", async function() {
+                    let newTitle = $("#".concat(postedJobs[i].id, "-title")).val();
+                    let newDesc = $("#".concat(postedJobs[i].id, "-desc")).val();
+                    let newAddr = $("#".concat(postedJobs[i].id, "-address")).val();
+                    let newState = $("#".concat(postedJobs[i].id, "-state")).val();
+                    let newTown = $("#".concat(postedJobs[i].id, "-town")).val();
+                    let newJob = {"id":postedJobs[i].id,"title":newTitle,"description":newDesc,"address":newAddr,"state":newState,"town":newTown};
+                    await createJob(postedJobs[i].id, newJob);
+                    location.reload();
+                });
+            });
+        }
+        
+    }
+    for (let i = 0; i < acceptedJobs.length; i++) {
         jobroot.append(`<div class="card">
             <header class="card-header">
                 <p class="card-header-title">
-                    Title: ${jobs[i].title}
+                    Title: ${acceptedJobs[i].title}
                 </p>
             </header>
             <div class="card-content">
                 <div class="content">
-                    Description:
-                    ${jobs[i].description}
-                </div>
-                <br>
-                <data>id: ${jobs[i].id}</data>
+                    <p><strong>Title: </strong> ${acceptedJobs[i].title}</p>
+                    <p><strong>Description: </strong> ${acceptedJobs[i].description}</p>
+                    <p><strong>Address: </strong> ${acceptedJobs[i].address}</p>
+                    <p><strong>State: </strong> ${acceptedJobs[i].state}</p>
+                    <p><strong>Town: </strong> ${acceptedJobs[i].town}</p>
+                </div>    
             </div>
-            <footer class="card-footer">
-                <a href="#" id="job-edit-${jobs[i].id}" class="card-footer-item">Edit</a>
-                <a href="#" id="job-delete-${jobs[i].id}" class="card-footer-item">Delete</a>
-            </footer>
         </div>`);
-        $("#job-delete-".concat(jobs[i].id)).on("click", async function() {
-            console.log('entered');
-            await deleteJob(username, jobs[i].id);
-        });
     }
-
 }
 
 const renderMessages = function(jobs, username) {
@@ -540,7 +680,6 @@ async function handleSubmitLoginForm() {
     let user = {name:username, email:email, pass: password};
     if($("#loginRadio").is(":checked")) {
         let success = await loginUser(user);
-        console.log(success);
         if (success==false) {
             $("#failureContainer").text("failed to login");
             return;
@@ -572,8 +711,80 @@ $(async function() {
         renderNavbar(true);
     }
 
-    if (window.location.href.includes("/messages")||window.location.href.includes("/jobs")) {
-        getMessages(await getUser());
+    if (window.location.href.includes("/messages")) {
+        getMessages();
+    } else if (window.location.href.includes("/jobs")) {
+        getJobs();
+    }
+
+    if(window.location.href.includes("post-job-page")) {
+        let search = $("#state")[0];
+        let stateList = $(`#state-list`)[0];
+        let states = [ 'AL', 'AK', 'AS', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FM', 'FL', 'GA', 'GU', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MH', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'MP', 'OH', 'OK', 'OR', 'PW', 'PA', 'PR', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VI', 'VA', 'WA', 'WV', 'WI', 'WY' ];
+        localStorage.setItem('key', JSON.stringify(states));
+        
+        let getList = function(txt){
+            return new Promise((resolve, reject)=>{
+                //use setTimeout with random value to show what can happen
+                let r = Math.floor(Math.random()*1000);
+                setTimeout((function(){
+                    let t = '^' + this.toString();
+                    let pattern = new RegExp(t, 'i'); //starts with t
+                    let terms = JSON.parse(localStorage.getItem('key'));
+                    let matches = terms.filter(term => pattern.test(term));
+                    resolve(matches);
+                }).bind(txt), r);
+            })
+        }
+
+        let searchStates = _.debounce(function(event) {
+            
+            // let matches = states.filter(state=>{
+            //     const regex = new RegExp(`^${searchText}`, 'gi');
+            //     return state.match(regex);
+            // });
+            // if (searchText.length == 0 || searchText.length > 2) {
+            //     matches = [];
+            //     stateList.innerHTML = "";
+            // }
+
+            // _.debounce(outputHTML(matches), 1000);
+            let text = event.target.value;
+            getList(text)
+            .then((list) => {
+                stateList.innerHTML = '';
+                if(list.length == 0 || list.length == 59) {
+                    stateList.innerHTML = '';
+                } else {
+                    list.forEach(item => {
+                        let li = document.createElement('li');
+                        li.addEventListener('click', () => {
+                            state.value = item;
+                            stateList.innerHTML = '';
+                        })
+                        li.textContent = item;
+                        stateList.appendChild(li);
+                    })
+                }
+            })
+            .catch(error => console.warn(err));
+        }, 300);
+
+        // const outputHTML = matches => {
+        //     if (matches.length > 0) {
+        //         const html = matches.map(match => 
+                    // `<li>
+                    //     <button id = #state-button class="button is-fullwidth">
+                    //         ${match}
+                    //     </button>
+                    // </li>`
+        //         ).join("");
+        //         stateList.innerHTML = html;
+        //     }
+        // }
+
+        search.addEventListener('input', searchStates);
+        
     }
 
     
@@ -584,75 +795,4 @@ $(async function() {
     $("#submit").click(togglePostJob);
     $("#okButton").click(togglePostJob);
     $(document.body).on("click", "#submit", submitPostingEventHandler);
-    let search = $("#state")[0];
-    console.log(search);
-    let stateList = $(`#state-list`)[0];
-    console.log(stateList);
-    let states = [ 'AL', 'AK', 'AS', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FM', 'FL', 'GA', 'GU', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MH', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'MP', 'OH', 'OK', 'OR', 'PW', 'PA', 'PR', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VI', 'VA', 'WA', 'WV', 'WI', 'WY' ];
-    localStorage.setItem('key', JSON.stringify(states));
-    
-    let getList = function(txt){
-        return new Promise((resolve, reject)=>{
-            //use setTimeout with random value to show what can happen
-            let r = Math.floor(Math.random()*1000);
-            setTimeout((function(){
-                let t = '^' + this.toString();
-                console.log(t);
-                let pattern = new RegExp(t, 'i'); //starts with t
-                let terms = JSON.parse(localStorage.getItem('key'));
-                let matches = terms.filter(term => pattern.test(term));
-                resolve(matches);
-            }).bind(txt), r);
-        })
-    }
-
-    let searchStates = _.debounce(function(event) {
-        
-        // let matches = states.filter(state=>{
-        //     const regex = new RegExp(`^${searchText}`, 'gi');
-        //     return state.match(regex);
-        // });
-        // if (searchText.length == 0 || searchText.length > 2) {
-        //     matches = [];
-        //     stateList.innerHTML = "";
-        // }
-
-        // _.debounce(outputHTML(matches), 1000);
-        let text = event.target.value;
-        getList(text)
-        .then((list) => {
-            stateList.innerHTML = '';
-            if(list.length == 0 || list.length == 59) {
-                stateList.innerHTML = '';
-            } else {
-                list.forEach(item => {
-                    let li = document.createElement('li');
-                    li.addEventListener('click', () => {
-                        console.log("clicked");
-                        state.value = item;
-                        stateList.innerHTML = '';
-                    })
-                    li.textContent = item;
-                    stateList.appendChild(li);
-                })
-            }
-        })
-        .catch(error => console.warn(err));
-    }, 300);
-
-    // const outputHTML = matches => {
-    //     if (matches.length > 0) {
-    //         const html = matches.map(match => 
-                // `<li>
-                //     <button id = #state-button class="button is-fullwidth">
-                //         ${match}
-                //     </button>
-                // </li>`
-    //         ).join("");
-    //         stateList.innerHTML = html;
-    //     }
-    // }
-
-    search.addEventListener('input', searchStates);
-    
 });
