@@ -13,7 +13,7 @@
                 <div class="modal-content">
                     <div class="box">
                         <div class = "content">
-                            You're job has been successfully Posted! You can go to the Job Page to see it.
+                            Your job has been successfully Posted! You can go to the Job Page or Home Page to see it.
                         </div>
                         <div class="container has-text-centered">
                             <button id="okButton" class="button is-success">Ok!</button>
@@ -48,6 +48,11 @@
                         <div class="control">
                             <input id = "state" class="input" type="text" placeholder="e.g. NC">
                         </div>
+                        <div>
+                            <ul id = "state-list">
+
+                            </ul>
+                        </div>
                     </div>
                 </div>    
             </div>
@@ -64,9 +69,10 @@
                     </button>
                 </div>
             </div>
-        </div>
+        </form>
     <script src="../node_modules/jquery/dist/jquery.js"></script>
     <script src="../node_modules/axios/dist/axios.js"></script>
+    <script src="../node_modules/underscore/underscore.js"></script>
     <script src="app.js" type="module"></script>
     </body>
 </html>

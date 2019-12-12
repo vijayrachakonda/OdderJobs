@@ -15,7 +15,6 @@ const renderNavbar = function(loggedIn) {
                             <div class="navbar-item"><a class="navlink" href="/messages.html">Messages</a></div>
                             <div class="navbar-item"><a class="navlink" href="/post-job-page.html">Post Job</a></div>
                             <div class="navbar-item"><a class="navlink" href="/jobs.html">Jobs</a></div>
-                            <div class="navbar-item"><a class="navlink" href="/messages.html">Messages</a></div>
                         </div>
                     <div class="navbar-end">
                         <div class="navbar-item"><button id="logoutButton" class="button is-danger">Logout</button></div>
@@ -111,63 +110,64 @@ const renderMessage = function(msg, prev, username) {
     return element;
 }
 
-const renderMessages = function(jobs, username) {
-    const messageroot = $("#messages-root");
-    for(let i = 0; i < jobs.length; i++) {
-        let messages = jobs[i].messages;
-        let fromString="";
-        if (jobs[i].postedBy !== username) {
-            fromString=jobs[i].postedBy;
-        } else {
-            messages.forEach(function(msg) {
-                if (msg.from.name !== username) {
-                    fromString = msg.from.name;
-                }
-            });
-            if (fromString==="") {
-                fromString = "Unaccepted";
-            }
-        }
-        if(messages.length == 0) {
-            messageroot.append(`<div id="`.concat(jobs[i].id, `-chat" class="box"><div class="media content">`,`<span class="jobTitle"><strong>`,
-            jobs[i].title, `</strong>,<i> `, fromString, `</i></span></div><div class="content"><div style="margin-top:0;margin-bottom:10px">`, jobs[i].description, `</div><i id="`, jobs[i].id, `-arrow" style="color:#0B93F6" class="fas fa-arrow-down"></i></span></div></div>
-            <div id="`, jobs[i].id, `-wrapper" style="overflow:hidden;width:500px;margin:0 auto;"><div id="`, jobs[i].id, `-msgs" class="box" style="overflow-y:scroll;overflow-x:hidden;height:400px;position:relative"></div></div>`));
-        } else {
-            let last = messages[messages.length - 1];
-            messageroot.append(`<div id="`.concat(jobs[i].id, `-chat" class="box"><div class="media content">`,`<span class="jobTitle"><strong>`,
-                jobs[i].title, `</strong>,<i> `, fromString, `</i></span></div><div class="content"><div style="margin-top:0;margin-bottom:10px">`, jobs[i].description, `</div><span><i>`, last.time,`\t\t</i></span>`, `<span><strong>`, last.from.name,
-                '</strong>: ', last.body, `</span></div><span class="icon"><i id="`, jobs[i].id, `-arrow" style="color:#0B93F6" class="fas fa-arrow-down"></i></span></div></div>
-                <div id="`, jobs[i].id, `-wrapper" style="overflow:hidden;width:500px;margin:0 auto;"><div id="`, jobs[i].id, `-msgs" class="box" style="overflow-y:scroll;overflow-x:hidden;height:400px;position:relative"></div></div>`));
-        }
-        $("#".concat(jobs[i].id, "-wrapper")).hide();
-        $("#".concat(jobs[i].id,"-chat")).on("click",   function() {
-            if($("#".concat(jobs[i].id, "-arrow")).hasClass('fas fa-arrow-down')) {
-                $("#".concat(jobs[i].id, "-arrow")).removeClass('fas fa-arrow-down');
-                $("#".concat(jobs[i].id, "-arrow")).addClass('fas fa-arrow-up');
-            } else {
-                $("#".concat(jobs[i].id, "-arrow")).removeClass('fas fa-arrow-up');
-                $("#".concat(jobs[i].id, "-arrow")).addClass('fas fa-arrow-down');
-            }
-            $("#".concat(jobs[i].id, "-wrapper")).empty();
-            $("#".concat(jobs[i].id, "-wrapper")).toggle();
-            $("#".concat(jobs[i].id, "-wrapper")).append(`<div id="`.concat(jobs[i].id, `-msgs" class="box" style="overflow-y:scroll;overflow-x:hidden;height:400px;position:relative"></div>`));
-            if(messages.length > 0) {
-                $("#".concat(jobs[i].id, "-msgs")).append(renderMessage(messages[0], null, username));
-                for(let j = 1; j < messages.length; j++) {
-                    let message = messages[j];
-                    let element = renderMessage(message, messages[j - 1], username);
-                    $("#".concat(jobs[i].id, "-msgs")).append(element);
-                }
-            }
-            $("#".concat(jobs[i].id, "-wrapper")).append(`<div class="send-message" id="`.concat(jobs[i].id, `-input" style="display:inline;white-space:nowrap;"></div>`));
-            $("#".concat(jobs[i].id, "-input")).append(`<input id="`.concat(jobs[i].id, `-newMsg" style="width:90%;" class="input" type="text" placeholder="Send a message..."/>`));
-            $("#".concat(jobs[i].id, "-input")).append(`<button id="`.concat(jobs[i].id, `-send" style="width:10%;" class="button is-info"><span class="icon"><i class="fas fa-paper-plane"></i></span></button>`));
-            let scrollboi = document.getElementById(jobs[i].id.concat("-msgs"));
-            scrollboi.scrollTop = scrollboi.scrollHeight;
-        });
-        handleMessages(jobs[i].id);
-    }
-}
+
+// const renderMessages = function(jobs, username) {
+//     const messageroot = $("#messages-root");
+//     for(let i = 0; i < jobs.length; i++) {
+//         let messages = jobs[i].messages;
+//         let fromString="";
+//         if (jobs[i].postedBy !== username) {
+//             fromString=jobs[i].postedBy;
+//         } else {
+//             messages.forEach(function(msg) {
+//                 if (msg.from.name !== username) {
+//                     fromString = msg.from.name;
+//                 }
+//             });
+//             if (fromString==="") {
+//                 fromString = "Unaccepted";
+//             }
+//         }
+//         if(messages.length == 0) {
+//             messageroot.append(`<div id="`.concat(jobs[i].id, `-chat" class="box"><div class="media content">`,`<span class="jobTitle"><strong>`,
+//             jobs[i].title, `</strong>,<i> `, fromString, `</i></span></div><div class="content"><div style="margin-top:0;margin-bottom:10px">`, jobs[i].description, `</div><i id="`, jobs[i].id, `-arrow" style="color:#0B93F6" class="fas fa-arrow-down"></i></span></div></div>
+//             <div id="`, jobs[i].id, `-wrapper" style="overflow:hidden;width:500px;margin:0 auto;"><div id="`, jobs[i].id, `-msgs" class="box" style="overflow-y:scroll;overflow-x:hidden;height:400px;position:relative"></div></div>`));
+//         } else {
+//             let last = messages[messages.length - 1];
+//             messageroot.append(`<div id="`.concat(jobs[i].id, `-chat" class="box"><div class="media content">`,`<span class="jobTitle"><strong>`,
+//                 jobs[i].title, `</strong>,<i> `, fromString, `</i></span></div><div class="content"><div style="margin-top:0;margin-bottom:10px">`, jobs[i].description, `</div><span><i>`, last.time,`\t\t</i></span>`, `<span><strong>`, last.from.name,
+//                 '</strong>: ', last.body, `</span></div><span class="icon"><i id="`, jobs[i].id, `-arrow" style="color:#0B93F6" class="fas fa-arrow-down"></i></span></div></div>
+//                 <div id="`, jobs[i].id, `-wrapper" style="overflow:hidden;width:500px;margin:0 auto;"><div id="`, jobs[i].id, `-msgs" class="box" style="overflow-y:scroll;overflow-x:hidden;height:400px;position:relative"></div></div>`));
+//         }
+//         $("#".concat(jobs[i].id, "-wrapper")).hide();
+//         $("#".concat(jobs[i].id,"-chat")).on("click",   function() {
+//             if($("#".concat(jobs[i].id, "-arrow")).hasClass('fas fa-arrow-down')) {
+//                 $("#".concat(jobs[i].id, "-arrow")).removeClass('fas fa-arrow-down');
+//                 $("#".concat(jobs[i].id, "-arrow")).addClass('fas fa-arrow-up');
+//             } else {
+//                 $("#".concat(jobs[i].id, "-arrow")).removeClass('fas fa-arrow-up');
+//                 $("#".concat(jobs[i].id, "-arrow")).addClass('fas fa-arrow-down');
+//             }
+//             $("#".concat(jobs[i].id, "-wrapper")).empty();
+//             $("#".concat(jobs[i].id, "-wrapper")).toggle();
+//             $("#".concat(jobs[i].id, "-wrapper")).append(`<div id="`.concat(jobs[i].id, `-msgs" class="box" style="overflow-y:scroll;overflow-x:hidden;height:400px;position:relative"></div>`));
+//             if(messages.length > 0) {
+//                 $("#".concat(jobs[i].id, "-msgs")).append(renderMessage(messages[0], null, username));
+//                 for(let j = 1; j < messages.length; j++) {
+//                     let message = messages[j];
+//                     let element = renderMessage(message, messages[j - 1], username);
+//                     $("#".concat(jobs[i].id, "-msgs")).append(element);
+//                 }
+//             }
+//             $("#".concat(jobs[i].id, "-wrapper")).append(`<div class="send-message" id="`.concat(jobs[i].id, `-input" style="display:inline;white-space:nowrap;"></div>`));
+//             $("#".concat(jobs[i].id, "-input")).append(`<input id="`.concat(jobs[i].id, `-newMsg" style="width:90%;" class="input" type="text" placeholder="Send a message..."/>`));
+//             $("#".concat(jobs[i].id, "-input")).append(`<button id="`.concat(jobs[i].id, `-send" style="width:10%;" class="button is-info"><span class="icon"><i class="fas fa-paper-plane"></i></span></button>`));
+//             let scrollboi = document.getElementById(jobs[i].id.concat("-msgs"));
+//             scrollboi.scrollTop = scrollboi.scrollHeight;
+//         });
+//         handleMessages(jobs[i].id);
+//     }
+// }
 
 export async function getUser() {
     try {
@@ -192,6 +192,7 @@ async function findId() {
 }
 
 
+
 async function submitPostingEventHandler(event) {
     let job = {
         id: await findId(),
@@ -206,11 +207,6 @@ async function submitPostingEventHandler(event) {
 
 }
 
-// const autoComplete = function(inp) {
-//     let states = [ 'AL', 'AK', 'AS', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FM', 'FL', 'GA', 'GU', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MH', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'MP', 'OH', 'OK', 'OR', 'PW', 'PA', 'PR', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VI', 'VA', 'WA', 'WV', 'WI', 'WY' ];
-
-
-// }
 
 
 
@@ -238,6 +234,7 @@ const getCoordinates= async (job) => {
     return request.data.results[0].geometry.location;
 
   }
+
 
 
 async function createJob(username, job) {
@@ -297,15 +294,15 @@ async function createJob(username, job) {
 async function deleteJob(username, id) {
     const pubResult = await axios({
         method:'DELETE',
-        url:'http://localhost:3000/public/jobs'.concat(username,'/',id),
+        url:'http://localhost:3000/public/jobs/'.concat(id),
     });
     const privResult = await axios({
         method:'DELETE',
-        url:'http://localhost:3000/private/'.concat(username,'/',id),
+        url:'http://localhost:3000/private/jobs/'.concat(id)
     });
     const userResult = await axios({
         method:'DELETE',
-        url:'http://localhost:3000/user/'.concat(id),
+        url:'http://localhost:3000/user/'.concat(username, '/postedJobs', id),
     });
 }
 
@@ -349,14 +346,12 @@ async function getMessages() {
     postedJobs.data.result.forEach(function(job) {
         jobs.push(job.id);
    });
-    console.log(jobs);
     for(let i = 0; i < jobs.length; i++) {
         const job = await userRoot.get('http://localhost:3000/private/jobs/'.concat(jobs[i]), {
             headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
         });
         jobs[i] = job.data.result;
     }
-
     for (let i = 0 ; i < jobs.length ; i++) {
         let msgResult = await axios({
             method: "GET",
@@ -366,8 +361,98 @@ async function getMessages() {
 
         jobs[i].messages=msgResult.data.result;
     }
-    console.log(jobs);
     renderMessages(jobs, username);
+    renderJobsPage(jobs, username);
+}
+
+
+
+function renderJobsPage(jobs, username) {
+    const jobroot = $("#jobs-root");
+    for (let i = 0; i < jobs.length; i++) {
+        jobroot.append(`<div class="card">
+            <header class="card-header">
+                <p class="card-header-title">
+                    Title: ${jobs[i].title}
+                </p>
+            </header>
+            <div class="card-content">
+                <div class="content">
+                    Description:
+                    ${jobs[i].description}
+                </div>
+                <br>
+                <data>id: ${jobs[i].id}</data>
+            </div>
+            <footer class="card-footer">
+                <a href="#" id="job-edit-${jobs[i].id}" class="card-footer-item">Edit</a>
+                <a href="#" id="job-delete-${jobs[i].id}" class="card-footer-item">Delete</a>
+            </footer>
+        </div>`);
+        $("#job-edit".concat(jobs[i].id)).click(async function() {
+            console.log('entered');
+            await deleteJob(username, jobs[i].id);
+        });
+    }
+
+}
+
+const renderMessages = function(jobs, username) {
+    const messageroot = $("#messages-root");
+    for(let i = 0; i < jobs.length; i++) {
+        let messages = jobs[i].messages;
+        let fromString="";
+        if (jobs[i].postedBy !== username) {
+            fromString=jobs[i].postedBy;
+        } else {
+            messages.forEach(function(msg) {
+                if (msg.from.name !== username) {
+                    fromString = msg.from.name;
+                }
+            });
+            if (fromString==="") {
+                fromString = "Unaccepted";
+            }
+        }
+        if(messages.length == 0) {
+            messageroot.append(`<div id="`.concat(jobs[i].id, `-chat" class="box"><div class="media content">`,`<span class="jobTitle"><strong>`,
+            jobs[i].title, `</strong>,<i> `, fromString, `</i></span></div><div class="content"><div style="margin-top:0;margin-bottom:10px">`, jobs[i].description, `</div><i id="`, jobs[i].id, `-arrow" style="color:#0B93F6" class="fas fa-arrow-down"></i></span></div></div>
+            <div id="`, jobs[i].id, `-wrapper" style="overflow:hidden;width:500px;margin:0 auto;"><div id="`, jobs[i].id, `-msgs" class="box" style="overflow-y:scroll;overflow-x:hidden;height:400px;position:relative"></div></div>`));
+        } else {
+            let last = messages[messages.length - 1];
+            messageroot.append(`<div id="`.concat(jobs[i].id, `-chat" class="box"><div class="media content">`,`<span class="jobTitle"><strong>`,
+                jobs[i].title, `</strong>,<i> `, fromString, `</i></span></div><div class="content"><div style="margin-top:0;margin-bottom:10px">`, jobs[i].description, `</div><span><i>`, last.time,`\t\t</i></span>`, `<span><strong>`, last.from.name,
+                '</strong>: ', last.body, `</span></div><span class="icon"><i id="`, jobs[i].id, `-arrow" style="color:#0B93F6" class="fas fa-arrow-down"></i></span></div></div>
+                <div id="`, jobs[i].id, `-wrapper" style="overflow:hidden;width:500px;margin:0 auto;"><div id="`, jobs[i].id, `-msgs" class="box" style="overflow-y:scroll;overflow-x:hidden;height:400px;position:relative"></div></div>`));
+        }
+        $("#".concat(jobs[i].id, "-wrapper")).hide();
+        $("#".concat(jobs[i].id,"-chat")).on("click",   function() {
+            if($("#".concat(jobs[i].id, "-arrow")).hasClass('fas fa-arrow-down')) {
+                $("#".concat(jobs[i].id, "-arrow")).removeClass('fas fa-arrow-down');
+                $("#".concat(jobs[i].id, "-arrow")).addClass('fas fa-arrow-up');
+            } else {
+                $("#".concat(jobs[i].id, "-arrow")).removeClass('fas fa-arrow-up');
+                $("#".concat(jobs[i].id, "-arrow")).addClass('fas fa-arrow-down');
+            }
+            $("#".concat(jobs[i].id, "-wrapper")).empty();
+            $("#".concat(jobs[i].id, "-wrapper")).toggle();
+            $("#".concat(jobs[i].id, "-wrapper")).append(`<div id="`.concat(jobs[i].id, `-msgs" class="box" style="overflow-y:scroll;overflow-x:hidden;height:400px;position:relative"></div>`));
+            if(messages.length > 0) {
+                $("#".concat(jobs[i].id, "-msgs")).append(renderMessage(messages[0], null, username));
+                for(let j = 1; j < messages.length; j++) {
+                    let message = messages[j];
+                    let element = renderMessage(message, messages[j - 1], username);
+                    $("#".concat(jobs[i].id, "-msgs")).append(element);
+                }
+            }
+            $("#".concat(jobs[i].id, "-wrapper")).append(`<div class="send-message" id="`.concat(jobs[i].id, `-input" style="display:inline;white-space:nowrap;"></div>`));
+            $("#".concat(jobs[i].id, "-input")).append(`<input id="`.concat(jobs[i].id, `-newMsg" style="width:90%;" class="input" type="text" placeholder="Send a message..."/>`));
+            $("#".concat(jobs[i].id, "-input")).append(`<button id="`.concat(jobs[i].id, `-send" style="width:10%;" class="button is-info"><span class="icon"><i class="fas fa-paper-plane"></i></span></button>`));
+            let scrollboi = document.getElementById(jobs[i].id.concat("-msgs"));
+            scrollboi.scrollTop = scrollboi.scrollHeight;
+        });
+        handleMessages(jobs[i].id);
+    }
 }
 
 async function createUser(user) {
@@ -459,6 +544,8 @@ async function handleSubmitLoginForm() {
     }
 }
 
+
+
 $(async function() {
     let user = {name:"Nick", pass:"pass123",email:"Nick@nick.com"};
     let job = {id:"2", title: "Test title 2", description:"I need some help tilling about 4 to 5 acres of land. Job would probably be about 4 hours and I'm willing to pay somewhere around $25/hr buyt"};
@@ -471,9 +558,11 @@ $(async function() {
         renderNavbar(true);
     }
 
-    if (window.location.href.includes("/messages")) {
+    if (window.location.href.includes("/messages")||window.location.href.includes("/jobs")) {
         getMessages(await getUser());
     }
+
+    
     //deleteJob('nick','1');
     $("#cancelButton").click(toggleLogin);
     $("#submitButton").click(handleSubmitLoginForm);
@@ -481,4 +570,75 @@ $(async function() {
     $("#submit").click(togglePostJob);
     $("#okButton").click(togglePostJob);
     $(document.body).on("click", "#submit", submitPostingEventHandler);
+    // let search = $("#state");
+    // console.log(search);
+    // let stateList = $(`#state-list`)[0];
+    // console.log(stateList);
+    // let states = [ 'AL', 'AK', 'AS', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FM', 'FL', 'GA', 'GU', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MH', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'MP', 'OH', 'OK', 'OR', 'PW', 'PA', 'PR', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VI', 'VA', 'WA', 'WV', 'WI', 'WY' ];
+    // localStorage.setItem('key', JSON.stringify(states));
+    
+    // let getList = function(txt){
+    //     return new Promise((resolve, reject)=>{
+    //         //use setTimeout with random value to show what can happen
+    //         let r = Math.floor(Math.random()*1000);
+    //         setTimeout((function(){
+    //             let t = '^' + this.toString();
+    //             console.log(t);
+    //             let pattern = new RegExp(t, 'i'); //starts with t
+    //             let terms = JSON.parse(localStorage.getItem('key'));
+    //             let matches = terms.filter(term => pattern.test(term));
+    //             resolve(matches);
+    //         }).bind(txt), r);
+    //     })
+    // }
+
+    // let searchStates = _.debounce(function(event) {
+        
+    //     // let matches = states.filter(state=>{
+    //     //     const regex = new RegExp(`^${searchText}`, 'gi');
+    //     //     return state.match(regex);
+    //     // });
+    //     // if (searchText.length == 0 || searchText.length > 2) {
+    //     //     matches = [];
+    //     //     stateList.innerHTML = "";
+    //     // }
+
+    //     // _.debounce(outputHTML(matches), 1000);
+    //     let text = event.target.value;
+    //     getList(text)
+    //     .then((list) => {
+    //         stateList.innerHTML = '';
+    //         if(list.length == 0 || list.length == 59) {
+    //             stateList.innerHTML = '';
+    //         } else {
+    //             list.forEach(item => {
+    //                 let li = document.createElement('li');
+    //                 li.addEventListener('click', () => {
+    //                     console.log("clicked");
+    //                     state.value = item;
+    //                     stateList.innerHTML = '';
+    //                 })
+    //                 li.textContent = item;
+    //                 stateList.appendChild(li);
+    //             })
+    //         }
+    //     })
+    //     .catch(error => console.warn(err));
+    // }, 300);
+
+    // // const outputHTML = matches => {
+    // //     if (matches.length > 0) {
+    // //         const html = matches.map(match => 
+    //             // `<li>
+    //             //     <button id = #state-button class="button is-fullwidth">
+    //             //         ${match}
+    //             //     </button>
+    //             // </li>`
+    // //         ).join("");
+    // //         stateList.innerHTML = html;
+    // //     }
+    // // }
+
+    // search.addEventListener('input', searchStates);
+    
 });
