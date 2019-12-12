@@ -234,9 +234,7 @@ const getCoordinates= async (job) => {
     formattedAddress = formattedAddress.slice(0, formattedAddress.length - 1);
     formattedAddress += ",+";
     formattedAddress += job.state;
-    console.log(formattedAddress);
     let request = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${formattedAddress}&key=AIzaSyCi734gg8A9BUfEEggK7jiBTwxadBZJOMU`);
-    console.log(request);
     return request.data.results[0].geometry.location;
 
   }
@@ -280,11 +278,19 @@ async function createJob(username, job) {
         data: {
             "data": {
                 "id":job.id,
+                "title":job.title,
+                "description":job.description,
+                "address": job.address,
+                "state": job.state,
+                "town": job.town,
+                "accepted":false
             },
             "type": "merge"
         }
     });
 }
+
+
 
 async function deleteJob(username, id) {
     const pubResult = await axios({
