@@ -14,7 +14,10 @@
 }
 
 
-#map{ z-index:1; }
+#map { 
+    z-index:1;
+    margin-top: 20px;
+}
 .modal{ z-index:2; }
 
 .jobTitle {

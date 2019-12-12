@@ -297,7 +297,7 @@ function toggleLogin() {
 
 function logout() {
     localStorage.clear();
-    location.reload();
+    window.location.replace("./index.html");
 }
 
 async function handleSubmitLoginForm() {
