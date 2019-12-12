@@ -65,7 +65,6 @@ async function sendMessage(jobId, body) {
         }
     });
     let last = $("#".concat(jobId, "-msgs")).children().last();
-    let fromMe = last.children().last().hasClass('from-me');
     $("#".concat(jobId, "-msgs")).append(renderMessage(msgObj, null, username));
     let scrollboi = document.getElementById(jobId.concat("-msgs"));
     scrollboi.scrollTop = scrollboi.scrollHeight;
@@ -113,7 +112,6 @@ const renderMessage = function(msg, prev, username) {
 const renderMessages = function(jobs, username) {
     const messageroot = $("#messages-root");
     for(let i = 0; i < jobs.length; i++) {
-        console.log(jobs[i]);
         let messages = jobs[i].messages;
         let last = messages[messages.length - 1];
         messageroot.append(`<div id="`.concat(jobs[i].id, `-chat" class="box"><div class="media content">`,`<span class="jobTitle"><strong>`,
@@ -132,12 +130,9 @@ const renderMessages = function(jobs, username) {
             $("#".concat(jobs[i].id, "-wrapper")).empty();
             $("#".concat(jobs[i].id, "-wrapper")).toggle();
             $("#".concat(jobs[i].id, "-wrapper")).append(`<div id="`.concat(jobs[i].id, `-msgs" class="box" style="overflow-y:scroll;overflow-x:hidden;height:400px;position:relative"></div>`));
-            if(messages[0].from.name === username) fromMe = true;
             $("#".concat(jobs[i].id, "-msgs")).append(renderMessage(messages[0], null, username));
-            fromMe = false;
             for(let j = 1; j < messages.length; j++) {
                 let message = messages[j];
-                if(message.from.name === username) fromMe = true;
                 let element = renderMessage(message, messages[j - 1], username);
                 $("#".concat(jobs[i].id, "-msgs")).append(element);
             }
@@ -234,6 +229,10 @@ async function getMessages() {
         url: 'http://localhost:3000/user',
         headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
     });
+    const loggedIn = await userRoot.get('http://localhost:3000/account/status', {
+        headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
+    });
+    let username = loggedIn.data.user.name;
     let jobIds = userData.data.result;
     let jobs = [];
     for(let i = 0; i < jobIds.length; i++) {
@@ -263,17 +262,18 @@ async function createUser(user) {
 }
 
 async function loginUser(user) {
-    const result = await axios({
-        method:'POST',
-        url:'http://localhost:3000/account/login',
-        data: {
-            "name":user.name,
-            "pass":user.pass,
-            "data": {"email":user.email}
-        }
-    });
-    localStorage.setItem('jwt', result.data.jwt);
-    return result;
+    try {
+        const result = await axios({
+            method:'POST',
+            url:'http://localhost:3000/account/login',
+            data: {
+                "name":user.name,
+                "pass":user.pass,
+                "data": {"email":user.email}
+            }
+        });
+        localStorage.setItem('jwt', result.data.jwt);
+        return result;
     } catch (error) {
         return false;
     }
@@ -326,6 +326,7 @@ $(function() {
         renderNavbar(false);
     } else {
         renderNavbar(true);
+        getMessages(getUser());
     }
     //deleteJob('nick','1');
     $("#cancelButton").click(toggleLogin);
