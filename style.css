@@ -12,3 +12,6 @@
     margin-left:10px;
     margin-top:10px;
 }
+
+#map{ z-index:1; }
+.modal{ z-index:2; }

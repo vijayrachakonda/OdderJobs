@@ -7,13 +7,17 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
 }).addTo(map);
 
 let marker = L.marker([35.912076156582295, -79.05118707892768]);
-marker.bindPopup(`<div class="has-text-centered"><b>Pruning an old tree</b>
-                  <br>Tall people needed to prune<br>branches of ver...<br>
+marker.bindPopup(`<div class="has-text-centered"><b>Pruning an old tree</b><br>
                   <button class="button is-primary">Respond to Request</button></div>`).openPopup().addTo(map);
 
 const pubRoot = new axios.create({
     baseURL: "http://localhost:3000/public"
 });
+
+
+function handleRespondToJob(id) {
+    window.location.replace(`/messages.html?id=${id}`);
+}
 
 async function getJobs() {
     let jobList;
@@ -22,24 +26,17 @@ async function getJobs() {
     let markers=[];
     let renderID = 0;
     jobList.result.forEach(function(job) {
+        let subRenderID = renderID;
         let randLat = Math.random() * (36 - 35.9) + 35.9;
         let randLong = Math.random() * (-79.0 - -79.1) + -79.1;
         let marker = L.marker([randLat, randLong]);
-        let firstLine, secondLine = "";
-        if (job.description.length <= 33) {
-            firstLine = job.description.slice(0, job.description.length);
-        } else if (job.description.length>33 && job.description.length <=66) {
-            firstLine = job.description.slice(0, 34);
-            secondLine = job.description.slice(35, job.description.length);
-        } else {
-            firstLine = job.description.slice(0,34);
-            secondLine= job.description.slice(35, 63) + "...";
-        }
         marker.bindPopup(`<div class="has-text-centered"><b>${job.title.slice(0,31)}...</b>
-                          <br>${firstLine}<br>${secondLine}<br>
-                          <button class="button is-primary">Respond to Request</button></div>`).openPopup().addTo(map);
-        $
+                          <br>${job.description}<br><br>
+                          <a <button id="respond${renderID}" class="button is-primary">Respond to Request</button></div>`).openPopup().addTo(map);
+        //$(`#respond${renderID}`).click(handleRespondToJob);
+        $(document.body).on("click", `#respond${renderID}`, function() { handleRespondToJob(subRenderID) });
         markers.push(marker);
+        renderID++;
     });
 }
 getJobs();

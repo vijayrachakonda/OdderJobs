@@ -27,7 +27,7 @@ const renderNavbar = function(loggedIn) {
                         <div class="navbar-item">Job Listings</div>
                     </div>
                 <div class="navbar-end">
-                    <div class="navbar-item">Login/Register</div>
+                    <div class="navbar-item"><button id="loginButton" class="button is-success">Login/Register</button></div>
                 </div>
             </div>`
     }
@@ -135,9 +135,14 @@ async function loginUser(user) {
     return result;
 }
 
+let modalActive = 0;
+function toggleLogin() {
+    
+}
+
 $(function() {
     let user = {name:"Nick", pass:"pass123",email:"Nick@nick.com"};
-    let job = {id:"2", title: "Test title 2", description:"Test description 2."};
+    let job = {id:"2", title: "Test title 2", description:"I need some help tilling about 4 to 5 acres of land. Job would probably be about 4 hours and I'm willing to pay somewhere around $25/hr buyt"};
     //createUser(user);
     loginUser(user);
     //createJob('Nick', job);
