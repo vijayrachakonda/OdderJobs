@@ -13,6 +13,10 @@
     margin-top:10px;
 }
 
+
+#map{ z-index:1; }
+.modal{ z-index:2; }
+
 .jobTitle {
     font-size:20px;
 }
