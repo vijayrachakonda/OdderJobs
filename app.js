@@ -112,6 +112,7 @@ const renderMessage = function(msg, prev, username) {
 const renderMessages = function(jobs, username) {
     const messageroot = $("#messages-root");
     for(let i = 0; i < jobs.length; i++) {
+        console.log(jobs[i]);
         let messages = jobs[i].messages;
         let last = messages[messages.length - 1];
         messageroot.append(`<div id="`.concat(jobs[i].id, `-chat" class="box"><div class="media content">`,`<span class="jobTitle"><strong>`,
@@ -157,15 +158,17 @@ async function createJob(username, job) {
     });
     const privResult = await axios({
         method:"POST",
-        url:'http://localhost:3000/private/'.concat(username,'/',job.id),
+        url:'http://localhost:3000/private/'.concat(username),
         headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))},
         data: {
             "data": {
                 "id":job.id,
                 "title":job.title,
                 "description":job.description,
+                "postedBy":username,
                 "accepted":false
-            }
+            },
+            "type":"merge"
         }
     });
     const userResult = await axios({
@@ -177,6 +180,7 @@ async function createJob(username, job) {
                 "id":job.id,
                 "title":job.title,
                 "description":job.description,
+                "postedBy":username,
                 "accepted":false,
                 "messages":[{
                     "time":"Test time",
@@ -215,8 +219,10 @@ async function deleteJob(username, id) {
     });
 }
 
-async function getMessages(username) {
-    const userData = await userRoot.get('http://localhost:3000/user/', {
+async function getMessages() {
+    const userData = await axios({
+        method: "GET",
+        url: 'http://localhost:3000/user',
         headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
     });
     let jobIds = userData.data.result;
@@ -248,7 +254,8 @@ async function loginUser(user) {
         url:'http://localhost:3000/account/login',
         data: {
             "name":user.name,
-            "pass":user.pass
+            "pass":user.pass,
+            "data": {"email":user.email}
         }
     });
     localStorage.setItem('jwt', result.data.jwt);
@@ -256,14 +263,16 @@ async function loginUser(user) {
 }
 
 $(function() {
-    renderNavbar(true);
+    localStorage.clear();
     let user = {name:"Nick", pass:"pass123",email:"Nick@nick.com"};
     let user2 = {name:"bob", pass:"pass123",email:"Bob@bob.com"};
-    let job = {id:"2", title: "Test title 2", description:"Test description 2."};
-    let job2 = {id:"3", title: "Test title 3", description:"Test description 3."};
+    let job1 = {id:"1", title: "Test title 1", description:"Test description 1."};
+    let job2 = {id:"2", title: "Test title 2", description:"Test description 2."};
+    let job3 = {id:"3", title: "Test title 3", description:"Test description 3."};
     //createUser(user2);
-    loginUser(user);
-    createJob('bob', job2);
+    loginUser(user2);
+    renderNavbar(true);
+    //createJob('bob', job1);
     //getMessages('bob');
     //deleteJob('nick','1');
 });
