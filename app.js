@@ -147,11 +147,15 @@ const renderMessages = function(jobs, username) {
 }
 
 export async function getUser() {
+    try {
     const userData = await userRoot.get('http://localhost:3000/account/status', {
         headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
     });
     let username = userData.data.user.name;
     return username;
+    } catch (error) {
+        return false;
+    }
 }
 
 async function createJob(username, job) {
@@ -290,6 +294,11 @@ function toggleLogin() {
     }
 }
 
+function logout() {
+    localStorage.clear();
+    location.reload();
+}
+
 async function handleSubmitLoginForm() {
     let username = $("#username").val();
     let email = $("#email").val();
@@ -316,13 +325,13 @@ async function handleSubmitLoginForm() {
     }
 }
 
-$(function() {
+$(async function() {
     let user = {name:"Nick", pass:"pass123",email:"Nick@nick.com"};
     let job = {id:"2", title: "Test title 2", description:"I need some help tilling about 4 to 5 acres of land. Job would probably be about 4 hours and I'm willing to pay somewhere around $25/hr buyt"};
     //createUser(user);
     //loginUser(user);
     //createJob('Nick', job);
-    if (getUser()==undefined) {
+    if (await getUser()==false) {
         renderNavbar(false);
     } else {
         renderNavbar(true);
@@ -331,4 +340,5 @@ $(function() {
     //deleteJob('nick','1');
     $("#cancelButton").click(toggleLogin);
     $("#submitButton").click(handleSubmitLoginForm);
+    $("#logoutButton").click(logout);
 });

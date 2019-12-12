@@ -17,8 +17,8 @@ const pubRoot = new axios.create({
 });
 
 
-function handleRespondToJob(id) {
-    if (getUser() == undefined) {
+async function handleRespondToJob(id) {
+    if (await getUser() == false) {
         $("#loginModal").addClass("is-active");
         return;
     } else {
