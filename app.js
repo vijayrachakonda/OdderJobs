@@ -115,13 +115,32 @@ const renderMessages = function(jobs, username) {
     const messageroot = $("#messages-root");
     for(let i = 0; i < jobs.length; i++) {
         let messages = jobs[i].messages;
-        let last = messages[messages.length - 1];
-        messageroot.append(`<div id="`.concat(jobs[i].id, `-chat" class="box"><div class="media content">`,`<span class="jobTitle"><strong>`,
-            jobs[i].title, `</strong>,<i> `, messages[0].from.name, `</i></span></div><div class="content"><span><i>`, last.time,`\t\t</i></span>`, `<span><strong>`, last.from.name,
-            '</strong>: ', last.body, `</span></div><span class="icon"><i id="`, jobs[i].id, `-arrow" style="color:#0B93F6" class="fas fa-arrow-down"></i></span></div></div>
+        if(messages.length == 0) {
+            messageroot.append(`<div id="`.concat(jobs[i].id, `-chat" class="box"><div class="media content">`,`<span class="jobTitle"><strong>`,
+            jobs[i].title, `</strong></span></div><div class="content"><i id="`, jobs[i].id, `-arrow" style="color:#0B93F6" class="fas fa-arrow-down"></i></span></div></div>
             <div id="`, jobs[i].id, `-wrapper" style="overflow:hidden;width:500px;margin:0 auto;"><div id="`, jobs[i].id, `-msgs" class="box" style="overflow-y:scroll;overflow-x:hidden;height:400px;position:relative"></div></div>`));
+        } else {
+            let last = messages[messages.length - 1];
+            let fromString = messages[0].from.name;
+            if (fromString === username) {
+                messages.forEach(function(msg) {
+                    if (msg.from.name === username) {
+                        
+                    } else {
+                        fromString = msg.from.name;
+                    }
+                });
+            }
+            if (fromString===username) {
+                fromString = "Unaccepted";
+            }
+            messageroot.append(`<div id="`.concat(jobs[i].id, `-chat" class="box"><div class="media content">`,`<span class="jobTitle"><strong>`,
+                jobs[i].title, `</strong>,<i> `, fromString, `</i></span></div><div class="content"><span><i>`, last.time,`\t\t</i></span>`, `<span><strong>`, last.from.name,
+                '</strong>: ', last.body, `</span></div><span class="icon"><i id="`, jobs[i].id, `-arrow" style="color:#0B93F6" class="fas fa-arrow-down"></i></span></div></div>
+                <div id="`, jobs[i].id, `-wrapper" style="overflow:hidden;width:500px;margin:0 auto;"><div id="`, jobs[i].id, `-msgs" class="box" style="overflow-y:scroll;overflow-x:hidden;height:400px;position:relative"></div></div>`));
+        }
         $("#".concat(jobs[i].id, "-wrapper")).hide();
-        $("#".concat(jobs[i].id,"-chat")).on("click", function() {
+        $("#".concat(jobs[i].id,"-chat")).on("click",   function() {
             if($("#".concat(jobs[i].id, "-arrow")).hasClass('fas fa-arrow-down')) {
                 $("#".concat(jobs[i].id, "-arrow")).removeClass('fas fa-arrow-down');
                 $("#".concat(jobs[i].id, "-arrow")).addClass('fas fa-arrow-up');
@@ -132,11 +151,13 @@ const renderMessages = function(jobs, username) {
             $("#".concat(jobs[i].id, "-wrapper")).empty();
             $("#".concat(jobs[i].id, "-wrapper")).toggle();
             $("#".concat(jobs[i].id, "-wrapper")).append(`<div id="`.concat(jobs[i].id, `-msgs" class="box" style="overflow-y:scroll;overflow-x:hidden;height:400px;position:relative"></div>`));
-            $("#".concat(jobs[i].id, "-msgs")).append(renderMessage(messages[0], null, username));
-            for(let j = 1; j < messages.length; j++) {
-                let message = messages[j];
-                let element = renderMessage(message, messages[j - 1], username);
-                $("#".concat(jobs[i].id, "-msgs")).append(element);
+            if(messages.length > 0) {
+                $("#".concat(jobs[i].id, "-msgs")).append(renderMessage(messages[0], null, username));
+                for(let j = 1; j < messages.length; j++) {
+                    let message = messages[j];
+                    let element = renderMessage(message, messages[j - 1], username);
+                    $("#".concat(jobs[i].id, "-msgs")).append(element);
+                }
             }
             $("#".concat(jobs[i].id, "-wrapper")).append(`<div class="send-message" id="`.concat(jobs[i].id, `-input" style="display:inline;white-space:nowrap;"></div>`));
             $("#".concat(jobs[i].id, "-input")).append(`<input id="`.concat(jobs[i].id, `-newMsg" style="width:90%;" class="input" type="text" placeholder="Send a message..."/>`));
@@ -239,20 +260,13 @@ async function createJob(username, job) {
     });
     const userResult = await axios({
         method:"POST",
-        url:'http://localhost:3000/user/'.concat(job.id),
+        url:'http://localhost:3000/user/postedJobs',
         headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))},
         data: {
             "data": {
                 "id":job.id,
-                "title":job.title,
-                "description":job.description,
-                "address": job.address,
-                "town": job.town,
-                "state": job.state,
-                "postedBy":username,
-                "accepted":false,
-                "messages":[]
-            }
+            },
+            "type": "merge"
         }
     });
 }

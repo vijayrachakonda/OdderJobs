@@ -8,42 +8,54 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
     accessToken: 'pk.eyJ1IjoiY3J6MTQ0IiwiYSI6ImNrM3RsYWQwMTA0MnQzbHFyNjhiMWc2cXoifQ.7dBNwkFofBnk_bt0GFpdaQ'
 }).addTo(map);
 
-let marker = L.marker([35.912076156582295, -79.05118707892768]);
-marker.bindPopup(`<div class="has-text-centered"><b>Pruning an old tree</b><br>
-                  <button class="button is-primary">Respond to Request</button></div>`).openPopup().addTo(map);
-
 const pubRoot = new axios.create({
     baseURL: "http://localhost:3000/public"
 });
 
 
-async function handleRespondToJob(id) {
+async function handleRespondToJob(id, jobList) {
     if (await getUser() == false) {
         $("#loginModal").addClass("is-active");
         return;
-    } else {
-        window.location.replace(`/messages.html?id=${id}`);
     }
+    let jobObj = jobList.result.filter(job => {
+        return job.id===id;
+    });
+    if (jobObj[0].postedBy==await getUser()) {
+        alert("You cannot accept a job you posted!");
+        return;
+    }
+
+    const userResult = await axios({
+        method:"POST",
+        url:'http://localhost:3000/user/acceptedJobs',
+        headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))},
+        data: {
+            "data": {
+                "id":jobObj[0].id,
+            },
+            "type": "merge"
+        }
+    });
+    window.location.replace(`/messages.html`);
 }
 
 async function getJobs() {
     let jobList;
-    const {foo, bar} = await pubRoot.get('/Nick/jobs').then(res=>jobList=res.data);
+    const {foo, bar} = await pubRoot.get('/jobs').then(res=>jobList=res.data);
 
     let markers=[];
-    let renderID = 0;
     jobList.result.forEach(function(job) {
-        let subRenderID = renderID;
+        let subRenderID = job.id;
         let randLat = Math.random() * (36 - 35.9) + 35.9;
         let randLong = Math.random() * (-79.0 - -79.1) + -79.1;
         let marker = L.marker([randLat, randLong]);
-        marker.bindPopup(`<div class="has-text-centered"><b>${job.title.slice(0,31)}...</b>
+        marker.bindPopup(`<div class="has-text-centered"><b>${job.title}</b>
                           <br>${job.description}<br><br>
-                          <a <button id="respond${renderID}" class="button is-primary">Respond to Request</button></div>`).openPopup().addTo(map);
+                          <a <button id="respond${job.id}" class="button is-primary">Respond to Request</button></div>`).openPopup().addTo(map);
         //$(`#respond${renderID}`).click(handleRespondToJob);
-        $(document.body).on("click", `#respond${renderID}`, function() { handleRespondToJob(subRenderID) });
+        $(document.body).on("click", `#respond${job.id}`, function() { handleRespondToJob(subRenderID, jobList) });
         markers.push(marker);
-        renderID++;
     });
 }
 getJobs();
