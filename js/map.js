@@ -18,25 +18,26 @@ async function handleRespondToJob(id, jobList) {
         $("#loginModal").addClass("is-active");
         return;
     }
-    let jobObj = jobList.result.filter(job => {
-        return job.id===id;
-    });
-    if (jobObj[0].postedBy==await getUser()) {
+    if (jobList.postedBy==await getUser()) {
         alert("You cannot accept a job you posted!");
         return;
     }
-
     const userResult = await axios({
         method:"POST",
         url:'http://localhost:3000/user/acceptedJobs',
         headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))},
         data: {
             "data": {
-                "id":jobObj[0].id,
+                "id":jobList.id,
             },
             "type": "merge"
         }
     });
+
+    const destroyPubResult = await axios({
+        method:"DELETE",
+        url: "http://localhost:3000/public/jobs/".concat(jobList.id)
+    })
     window.location.replace(`/messages.html`);
 }
 
@@ -45,7 +46,8 @@ async function getJobs() {
     const {foo, bar} = await pubRoot.get('/jobs').then(res=>jobList=res.data);
 
     let markers=[];
-    jobList.result.forEach(function(job) {
+    for (let jobKey in jobList.result) {
+        let job = jobList.result[jobKey];
         let subRenderID = job.id;
         let randLat = Math.random() * (36 - 35.9) + 35.9;
         let randLong = Math.random() * (-79.0 - -79.1) + -79.1;
@@ -54,8 +56,8 @@ async function getJobs() {
                           <br>${job.description}<br><br>
                           <a <button id="respond${job.id}" class="button is-primary">Respond to Request</button></div>`).openPopup().addTo(map);
         //$(`#respond${renderID}`).click(handleRespondToJob);
-        $(document.body).on("click", `#respond${job.id}`, function() { handleRespondToJob(subRenderID, jobList) });
+        $(document.body).on("click", `#respond${job.id}`, function() { handleRespondToJob(subRenderID, job) });
         markers.push(marker);
-    });
+    };
 }
 getJobs();
