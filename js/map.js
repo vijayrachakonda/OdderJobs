@@ -49,9 +49,7 @@ async function getJobs() {
     for (let jobKey in jobList.result) {
         let job = jobList.result[jobKey];
         let subRenderID = job.id;
-        let randLat = Math.random() * (36 - 35.9) + 35.9;
-        let randLong = Math.random() * (-79.0 - -79.1) + -79.1;
-        let marker = L.marker([randLat, randLong]);
+        let marker = L.marker([job.coordinates.lat, job.coordinates.lng]);
         marker.bindPopup(`<div class="has-text-centered"><b>${job.title}</b>
                           <br>${job.description}<br><br>
                           <a <button id="respond${job.id}" class="button is-primary">Respond to Request</button></div>`).openPopup().addTo(map);

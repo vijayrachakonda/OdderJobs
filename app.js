@@ -286,12 +286,6 @@ async function createJob(username, job) {
         data: {
             "data": {
                 "id":job.id,
-                "title":job.title,
-                "description":job.description,
-                "address": job.address,
-                "state": job.state,
-                "town": job.town,
-                "accepted":false
             },
             "type": "merge"
         }
