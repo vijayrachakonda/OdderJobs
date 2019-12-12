@@ -1,3 +1,5 @@
+import { getUser } from "../app.js"
+
 let map = L.map('map').setView([35.912076156582295, -79.05118707892768], 13);
 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
     attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
@@ -16,7 +18,12 @@ const pubRoot = new axios.create({
 
 
 function handleRespondToJob(id) {
-    window.location.replace(`/messages.html?id=${id}`);
+    if (getUser() == undefined) {
+        $("#loginModal").addClass("is-active");
+        return;
+    } else {
+        window.location.replace(`/messages.html?id=${id}`);
+    }
 }
 
 async function getJobs() {

@@ -27,22 +27,16 @@
                           <div class="field">
                                 <div id="loginOrRegister" class="control has-text-centered">
                                   <label class="radio">
-                                    <input type="radio" name="question">
+                                    <input id="loginRadio" type="radio" name="question" checked="checked">
                                     Login
                                   </label>
                                   <label class="radio">
-                                    <input type="radio" name="question">
+                                    <input id="registerRadio" type="radio" name="question">
                                     Register
                                   </label>
                                 </div>
                               </div>
 
-                            <div class="field">
-                                    <label class="label">Name</label>
-                                    <div class="control">
-                                        <input id="name" class="input" type="text" placeholder="Text input">
-                                    </div>
-                            </div>
                             <div class="field">
                                 <label class="label">Username</label>
                                 <div class="control">
@@ -65,6 +59,7 @@
                                 <button id="submitButton" class="button is-success">Submit</button>
                                 <button id="cancelButton" class="button is-danger">Cancel</button>
                             </div>
+                            <div id="failureContainer" class="container has-text-centered" style="color:red"></div>
                       </div>>
                 </div>
                 <button class="modal-close is-large" aria-label="close"></button>

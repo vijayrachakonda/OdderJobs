@@ -15,7 +15,7 @@ const renderNavbar = function(loggedIn) {
                             <div class="navbar-item"><a class="navlink" href="/jobs.html">Jobs</a></div>
                         </div>
                     <div class="navbar-end">
-                        <div class="navbar-item"><a class="navlink">Logout</a></div>
+                        <div class="navbar-item"><button id="logoutButton" class="button is-danger">Logout</button></div>
                     </div>
                 </div>`
     } else {
@@ -33,6 +33,7 @@ const renderNavbar = function(loggedIn) {
     }
     const navroot = $("#navbar-root");
     navroot.append(element);
+    $('#loginButton').click(toggleLogin);
 }
 
 const renderMessages = function(messages) {
@@ -44,6 +45,14 @@ const renderMessages = function(messages) {
         `</strong></span></div><div class="content"><span id="`, message.id, `-body">`, message.body, `</span></div></div>`);
         jobroot.append(element);
     }
+}
+
+export async function getUser() {
+    const userData = await userRoot.get('http://localhost:3000/account/status', {
+        headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
+    });
+    let username = userData.data.user.name;
+    return username;
 }
 
 async function createJob(username, job) {
@@ -110,42 +119,89 @@ async function getMessages(id) {
 }
 
 async function createUser(user) {
-    const result = await axios({
-        method:'POST',
-        url:'http://localhost:3000/account/create',
-        data: {
-            "name":user.name,
-            "pass":user.pass,
-            "data": {"email":user.email}
-        }
-    });
-    console.log(result.data);
+    try {
+        const result = await axios({
+            method:'POST',
+            url:'http://localhost:3000/account/create',
+            data: {
+                "name":user.name,
+                "pass":user.pass,
+                "data": {"email":user.email}
+            }
+        });
+        return result;
+    } catch (error) {
+        return false;
+    }
 }
 
 async function loginUser(user) {
-    const result = await axios({
-        method:'POST',
-        url:'http://localhost:3000/account/login',
-        data: {
-            "name":user.name,
-            "pass":user.pass
-        }
-    });
+    try {
+        const result = await axios({
+            method:'POST',
+            url:'http://localhost:3000/account/login',
+            data: {
+                "name":user.name,
+                "pass":user.pass
+            }
+        });
     localStorage.setItem('jwt', result.data.jwt);
+    localStorage.setItem('currUser', user.name);
     return result;
+    } catch (error) {
+        return false;
+    }
 }
 
-let modalActive = 0;
+let modalActive = false;
 function toggleLogin() {
-    
+    if (!modalActive) {
+        $("#loginModal").addClass("is-active");
+        modalActive=true;
+    } else {
+        $("#loginModal").removeClass("is-active");
+        modalActive=false;
+    }
+}
+
+async function handleSubmitLoginForm() {
+    let username = $("#username").val();
+    let email = $("#email").val();
+    let password = $("#password").val();
+
+    let user = {name:username, email:email, pass: password};
+    if($("#loginRadio").is(":checked")) {
+        let success = await loginUser(user);
+        console.log(success);
+        if (success==false) {
+            $("#failureContainer").text("failed to login");
+            return;
+        } else {
+            location.reload();
+        }
+    } else {
+        let success = createUser(user);
+        if (success==false) {
+            $("#failureContainer").text("Failed to register");
+            return;
+        } else {
+            location.reload();
+        }
+    }
 }
 
 $(function() {
     let user = {name:"Nick", pass:"pass123",email:"Nick@nick.com"};
     let job = {id:"2", title: "Test title 2", description:"I need some help tilling about 4 to 5 acres of land. Job would probably be about 4 hours and I'm willing to pay somewhere around $25/hr buyt"};
     //createUser(user);
-    loginUser(user);
+    //loginUser(user);
     //createJob('Nick', job);
-    renderNavbar();
+    if (getUser()==undefined) {
+        renderNavbar(false);
+    } else {
+        renderNavbar(true);
+    }
     //deleteJob('nick','1');
+    $("#cancelButton").click(toggleLogin);
+    $("#submitButton").click(handleSubmitLoginForm);
 });
