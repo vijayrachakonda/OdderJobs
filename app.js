@@ -59,7 +59,7 @@ async function sendMessage(jobId, body) {
     let msgObj = {"time":formatAMPM(new Date()),"body":body,"from":{"name":username}};
     await axios({
         method:"POST",
-        url:'http://localhost:3000/user/'.concat(jobId, '/messages'),
+        url:'http://localhost:3000/private/messages/'.concat(jobId),
         headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))},
         data: {
             "data": [msgObj],
@@ -115,27 +115,27 @@ const renderMessages = function(jobs, username) {
     const messageroot = $("#messages-root");
     for(let i = 0; i < jobs.length; i++) {
         let messages = jobs[i].messages;
+        let fromString="";
+        if (jobs[i].postedBy !== username) {
+            fromString=jobs[i].postedBy;
+        } else {
+            messages.forEach(function(msg) {
+                if (msg.from.name !== username) {
+                    fromString = msg.from.name;
+                }
+            });
+            if (fromString==="") {
+                fromString = "Unaccepted";
+            }
+        }
         if(messages.length == 0) {
             messageroot.append(`<div id="`.concat(jobs[i].id, `-chat" class="box"><div class="media content">`,`<span class="jobTitle"><strong>`,
-            jobs[i].title, `</strong></span></div><div class="content"><i id="`, jobs[i].id, `-arrow" style="color:#0B93F6" class="fas fa-arrow-down"></i></span></div></div>
+            jobs[i].title, `</strong>,<i> `, fromString, `</i></span></div><div class="content"><div style="margin-top:0;margin-bottom:10px">`, jobs[i].description, `</div><i id="`, jobs[i].id, `-arrow" style="color:#0B93F6" class="fas fa-arrow-down"></i></span></div></div>
             <div id="`, jobs[i].id, `-wrapper" style="overflow:hidden;width:500px;margin:0 auto;"><div id="`, jobs[i].id, `-msgs" class="box" style="overflow-y:scroll;overflow-x:hidden;height:400px;position:relative"></div></div>`));
         } else {
             let last = messages[messages.length - 1];
-            let fromString = messages[0].from.name;
-            if (fromString === username) {
-                messages.forEach(function(msg) {
-                    if (msg.from.name === username) {
-                        
-                    } else {
-                        fromString = msg.from.name;
-                    }
-                });
-            }
-            if (fromString===username) {
-                fromString = "Unaccepted";
-            }
             messageroot.append(`<div id="`.concat(jobs[i].id, `-chat" class="box"><div class="media content">`,`<span class="jobTitle"><strong>`,
-                jobs[i].title, `</strong>,<i> `, fromString, `</i></span></div><div class="content"><span><i>`, last.time,`\t\t</i></span>`, `<span><strong>`, last.from.name,
+                jobs[i].title, `</strong>,<i> `, fromString, `</i></span></div><div class="content"><div style="margin-top:0;margin-bottom:10px">`, jobs[i].description, `</div><span><i>`, last.time,`\t\t</i></span>`, `<span><strong>`, last.from.name,
                 '</strong>: ', last.body, `</span></div><span class="icon"><i id="`, jobs[i].id, `-arrow" style="color:#0B93F6" class="fas fa-arrow-down"></i></span></div></div>
                 <div id="`, jobs[i].id, `-wrapper" style="overflow:hidden;width:500px;margin:0 auto;"><div id="`, jobs[i].id, `-msgs" class="box" style="overflow-y:scroll;overflow-x:hidden;height:400px;position:relative"></div></div>`));
         }
@@ -243,20 +243,20 @@ const getCoordinates= async (job) => {
 async function createJob(username, job) {
     let coordinates = await getCoordinates(job);
     if(job.description.length > 500) { job.description = job.description.slice(0, 500) };
-    const pubResult = await pubRoot.post('http://localhost:3000/public/jobs', {
-        "data": [{"id":job.id,
+    const pubResult = await pubRoot.post('http://localhost:3000/public/jobs/'.concat(job.id), {
+        "data": {
+                  "id":job.id,
                   "title":job.title,
                   "description":job.description,
                   "address": job.address,
                   "state": job.state,
                   "town": job.town,
                   "postedBy": username,
-                  "coordinates": coordinates}],
-        "type": "merge"
+                  "coordinates": coordinates},
     });
     const privResult = await axios({
         method:"POST",
-        url:'http://localhost:3000/private/'.concat(username),
+        url:'http://localhost:3000/private/jobs/'.concat(job.id),
         headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))},
         data: {
             "data": {
@@ -266,9 +266,17 @@ async function createJob(username, job) {
                 "address": job.address,
                 "state": job.state,
                 "town": job.town,
-                "accepted":false
+                "accepted":false,
+                "postedBy": username
             },
-            "type":"merge"
+        }
+    });
+    const privMessageResult = await axios({
+        method:"POST",
+        url:'http://localhost:3000/private/messages/'.concat(job.id),
+        headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))},
+        data: {
+            "data": []
         }
     });
     const userResult = await axios({
@@ -308,23 +316,63 @@ async function deleteJob(username, id) {
 }
 
 async function getMessages() {
-    const userData = await axios({
-        method: "GET",
-        url: 'http://localhost:3000/user',
-        headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
-    });
+    let acceptedJobs, postedJobs;
+    try {
+        acceptedJobs = await axios({
+            method: "GET",
+            url: 'http://localhost:3000/user/acceptedJobs',
+            headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
+        });
+    } catch (error) {
+        acceptedJobs = {
+            "data": {
+                "result": []
+            }
+        }
+    }
+    try {
+        postedJobs = await axios({
+            method: "GET",
+            url: 'http://localhost:3000/user/postedJobs',
+            headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
+        });
+    } catch (error) {
+        postedJobs = {
+            "data": {
+                "result": []
+            }
+        }
+    }
     const loggedIn = await userRoot.get('http://localhost:3000/account/status', {
         headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
     });
     let username = loggedIn.data.user.name;
-    let jobIds = userData.data.result;
     let jobs = [];
-    for(let i = 0; i < jobIds.length; i++) {
-        const job = await userRoot.get('http://localhost:3000/user/'.concat(jobIds[i]), {
+    //console.log(acceptedJobs.data.result); 
+    acceptedJobs.data.result.forEach(function(job) {
+         jobs.push(job.id);
+    });
+    postedJobs.data.result.forEach(function(job) {
+        jobs.push(job.id);
+   });
+    console.log(jobs);
+    for(let i = 0; i < jobs.length; i++) {
+        const job = await userRoot.get('http://localhost:3000/private/jobs/'.concat(jobs[i]), {
             headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
         });
         jobs[i] = job.data.result;
     }
+
+    for (let i = 0 ; i < jobs.length ; i++) {
+        let msgResult = await axios({
+            method: "GET",
+            url: 'http://localhost:3000/private/messages/'.concat(jobs[i].id),
+            headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
+        });
+
+        jobs[i].messages=msgResult.data.result;
+    }
+    console.log(jobs);
     renderMessages(jobs, username);
 }
 
