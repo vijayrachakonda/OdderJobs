@@ -36,12 +36,77 @@ const renderNavbar = function(loggedIn) {
     navroot.append(element);
 }
 
+function formatAMPM(date) {
+    var hours = date.getHours();
+    var minutes = date.getMinutes();
+    var ampm = hours >= 12 ? 'pm' : 'am';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // the hour '0' should be '12'
+    minutes = minutes < 10 ? '0'+minutes : minutes;
+    var strTime = hours + ':' + minutes + ' ' + ampm;
+    return strTime;
+  }
+
+async function sendMessage(jobId, body) {
+    if(body === "" || body === null) return;
+    const userData = await userRoot.get('http://localhost:3000/account/status', {
+        headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
+    });
+    let username = userData.data.user.name;
+    let msgObj = {"time":formatAMPM(new Date()),"body":body,"from":{"name":username}};
+    await axios({
+        method:"POST",
+        url:'http://localhost:3000/user/'.concat(jobId, '/messages'),
+        headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))},
+        data: {
+            "data": [msgObj],
+            "type":"merge"
+        }
+    });
+    let last = $("#".concat(jobId, "-msgs")).children().last();
+    let fromMe = last.children().last().hasClass('from-me');
+    $("#".concat(jobId, "-msgs")).append(renderMessage(msgObj, null, username));
+    let scrollboi = document.getElementById(jobId.concat("-msgs"));
+    scrollboi.scrollTop = scrollboi.scrollHeight;
+}
+
 const handleMessages = function(jobId) {
     $(document.body).on("click", "#".concat(jobId, "-send"), function() {
-        let value = $("#".concat(jobId, '-newMsg')).val();
+        let body = $("#".concat(jobId, '-newMsg')).val();
         $("#".concat(jobId, '-newMsg')).val('');
-        sendM
+        sendMessage(jobId, body);
     });
+}
+
+const renderMessage = function(msg, prev, username) {
+    let element = '';
+    if(msg.from.name.toUpperCase() === username.toUpperCase()) {
+        if(prev === null) {
+            element = `<div class="media content" style="margin-top:10px;margin-bottom:0;float:right;clear:both"><span><strong>`.concat(msg.from.name, 
+                `</strong></span></div><div style="margin-top:0;margin-bottom:10px;float:right;clear:both" class="content"><p class="from-me">`, msg.body, `</p></div>`);
+        } else {
+            if(prev.from.name.toUpperCase() === msg.from.name.toUpperCase()) {
+                element = `<div class="content" style="margin-top:10px;margin-bottom:0;float:right;clear:both;"><p class="from-me">`.concat(msg.body, `</p></div>`);
+            } else {
+                element = `<div class="media content" style="margin-top:10px;margin-bottom:0;float:right;clear:both"><span><strong>`.concat(msg.from.name, 
+                    `</strong></span></div><div style="margin-bottom:0;margin-top:0;float:right;clear:both" class="content"><p class="from-me">`, msg.body, `</p></div>`);
+            }
+        }
+    }
+    else {
+        if(prev === null) {
+            element = `<div class="media content" style="margin-top:10px;margin-bottom:0;float:left;clear:both"><span><strong>`.concat(msg.from.name, 
+                `</strong></span></div><div style="margin-bottom:10px;margin-top:0;float:left;clear:both" class="content"><p class="from-them">`, msg.body, `</p></div>`);
+        } else {
+            if(prev.from.name.toUpperCase() === msg.from.name.toUpperCase()) {
+                element = `<div class="content" style="margin-top:10px;margin-bottom:0;float:left;clear:both;"><p class="from-them">`.concat(msg.body, `</p></div>`);
+            } else {
+                element = `<div class="media content" style="margin-bottom:0;margin-top:10px;float:left;clear:both"><span><strong>`.concat(msg.from.name, 
+                    `</strong></span></div><div style="margin-top:0;margin-bottom:0;float:left;clear:both" class="content"><p class="from-them">`, msg.body, `</p></div>`);
+            }
+        }
+    }
+    return element;
 }
 
 const renderMessages = function(jobs, username) {
@@ -52,8 +117,8 @@ const renderMessages = function(jobs, username) {
         messageroot.append(`<div id="`.concat(jobs[i].id, `-chat" class="box"><div class="media content">`,`<span class="jobTitle"><strong>`,
             jobs[i].title, `</strong>,<i> `, messages[0].from.name, `</i></span></div><div class="content"><span><i>`, last.time,`\t\t</i></span>`, `<span><strong>`, last.from.name,
             '</strong>: ', last.body, `</span></div><span class="icon"><i id="`, jobs[i].id, `-arrow" style="color:#0B93F6" class="fas fa-arrow-down"></i></span></div></div>
-            <div id="`, jobs[i].id, `-msgs" class="box" style="margin:0 auto;overflow:scroll;width:500px;height:500px"></div>`));
-        $("#".concat(jobs[i].id, "-msgs")).hide();
+            <div id="`, jobs[i].id, `-wrapper" style="overflow:hidden;width:500px;margin:0 auto;"><div id="`, jobs[i].id, `-msgs" class="box" style="overflow-y:scroll;overflow-x:hidden;height:400px;position:relative"></div></div>`));
+        $("#".concat(jobs[i].id, "-wrapper")).hide();
         $("#".concat(jobs[i].id,"-chat")).on("click", function() {
             if($("#".concat(jobs[i].id, "-arrow")).hasClass('fas fa-arrow-down')) {
                 $("#".concat(jobs[i].id, "-arrow")).removeClass('fas fa-arrow-down');
@@ -62,40 +127,32 @@ const renderMessages = function(jobs, username) {
                 $("#".concat(jobs[i].id, "-arrow")).removeClass('fas fa-arrow-up');
                 $("#".concat(jobs[i].id, "-arrow")).addClass('fas fa-arrow-down');
             }
-            $("#".concat(jobs[i].id, "-msgs")).empty();
-            $("#".concat(jobs[i].id, "-msgs")).toggle();
-            for(let j = 0; j < messages.length; j++) {
+            $("#".concat(jobs[i].id, "-wrapper")).empty();
+            $("#".concat(jobs[i].id, "-wrapper")).toggle();
+            $("#".concat(jobs[i].id, "-wrapper")).append(`<div id="`.concat(jobs[i].id, `-msgs" class="box" style="overflow-y:scroll;overflow-x:hidden;height:400px;position:relative"></div>`));
+            if(messages[0].from.name === username) fromMe = true;
+            $("#".concat(jobs[i].id, "-msgs")).append(renderMessage(messages[0], null, username));
+            fromMe = false;
+            for(let j = 1; j < messages.length; j++) {
                 let message = messages[j];
-                let element = '';
-                if(message.from.name === username) {
-                    if(j > 0 && messages[j - 1].from.name === message.from.name) {
-                        element = `<div class="content" style="margin-top:0px;float:right;clear:both;"><p class="from-me">`.concat(message.body, `</span></div>`);
-                    } else {
-                        element = `<div class="media content" style="margin-bottom:0px;float:right;clear:both"><span><strong>`.concat(message.from.name, 
-                            `</strong></span></div><div style="margin-top:0px;float:right;clear:both" class="content"><p class="from-me">`, message.body, `</span></div>`);
-                    }
-                }
-                else {
-                    if(j > 0 && messages[j - 1].from.name === message.from.name) {
-                        element = `<div class="content" style="margin-top:0px;float:left;clear:both;"><p class="from-them">`.concat(message.body, `</span></div>`);
-                    } else {
-                        element = `<div class="media content" style="margin-bottom:0px;float:left;clear:both"><span><strong>`.concat(message.from.name, 
-                            `</strong></span></div><div style="margin-top:0px;float:left;clear:both" class="content"><p class="from-them">`, message.body, `</span></div>`);
-                    }
-                }
+                if(message.from.name === username) fromMe = true;
+                let element = renderMessage(message, messages[j - 1], username);
                 $("#".concat(jobs[i].id, "-msgs")).append(element);
             }
-            $("#".concat(jobs[i].id, "-msgs")).append(`<div class="send-message" id="`.concat(jobs[i].id, `-input" style="position:sticky;top:0;display:inline;white-space:nowrap;"></div>`));
+            $("#".concat(jobs[i].id, "-wrapper")).append(`<div class="send-message" id="`.concat(jobs[i].id, `-input" style="display:inline;white-space:nowrap;"></div>`));
             $("#".concat(jobs[i].id, "-input")).append(`<input id="`.concat(jobs[i].id, `-newMsg" style="width:90%;" class="input" type="text" placeholder="Send a message..."/>`));
             $("#".concat(jobs[i].id, "-input")).append(`<button id="`.concat(jobs[i].id, `-send" style="width:10%;" class="button is-info"><span class="icon"><i class="fas fa-paper-plane"></i></span></button>`));
+            let scrollboi = document.getElementById(jobs[i].id.concat("-msgs"));
+            scrollboi.scrollTop = scrollboi.scrollHeight;
         });
         handleMessages(jobs[i].id);
     }
 }
 
 async function createJob(username, job) {
-    const pubResult = await pubRoot.post('http://localhost:3000/public/'.concat(username,'/jobs'), {
-        "data": [{"id":job.id,"title":job.title,"description":job.description}],
+    if(job.description.length > 500) job.description = job.description.slice(0, 500);
+    const pubResult = await pubRoot.post('http://localhost:3000/public/jobs', {
+        "data": [{"id":job.id,"title":job.title,"description":job.description, "postedBy": username}],
         "type": "merge"
     });
     const privResult = await axios({
@@ -200,13 +257,13 @@ async function loginUser(user) {
 
 $(function() {
     renderNavbar(true);
-    let user = {name:"nick", pass:"pass123",email:"Nick@nick.com"};
+    let user = {name:"Nick", pass:"pass123",email:"Nick@nick.com"};
     let user2 = {name:"bob", pass:"pass123",email:"Bob@bob.com"};
     let job = {id:"2", title: "Test title 2", description:"Test description 2."};
     let job2 = {id:"3", title: "Test title 3", description:"Test description 3."};
-    //createUser(user);
-    //loginUser(user);
-    //createJob('Nick', job2);
-    getMessages('Nick');
+    //createUser(user2);
+    loginUser(user);
+    createJob('bob', job2);
+    //getMessages('bob');
     //deleteJob('nick','1');
 });
