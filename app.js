@@ -48,44 +48,42 @@ const renderMessages = function(messages) {
     }
 }
 
-async function getUser() {
-    const userData = await userRoot.get('http://localhost:3000/user/', {
-        headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
-    });
-    let name = userData.data.name;
-    return name;
-}
 
-async function findId(id) {
+async function findId() {
     const userData = await userRoot.get('http://localhost:3000/user/', {
         headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
     });
     let jobIds = userData.data.result;
-    if ($.inArray(id, jobIds) == -1) {
-        return id.toString();
-    } else {
-        id = Math.floor((Math.random() * 1000) + 1);
-        return findId(id);
-    }
+    let id = jobIds.length;
+    return id.toString();
 }
 
-const submitPostingEventHandler = function(event) {
-    id = Math.floor((Math.random() * 100) + 1);
-    id = find(id);
+async function getUser() {
+    const userData = await userRoot.get('http://localhost:3000/account/status', {
+        headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))}
+    });
+    let username = userData.data.user.name;
+    return username;
+}
+
+
+async function submitPostingEventHandler(event) {
     let job = {
-        id: id,
+        id: await findId(),
         title: $('#title').val(),
         description: $('#description').val(),
         address: $('#address').val(),
         town: $('#town').val(),
         zip: $('#zip').val(),    
     }
-    createJob(getUser(), job);
+    name = await getUser();
+    createJob(name, job);
+
 }
 
 async function createJob(username, job) {
-    const pubResult = await pubRoot.post('http://localhost:3000/public/'.concat(username,'/jobs'), {
-        "data": [{"title":job.title,"description":job.description, "address": job.address, "town": job.town, "zip": job.zip}],
+    const pubResult = await pubRoot.post('http://localhost:3000/public/jobs', {
+        "data": [{"id": job.id, "title":job.title,"description":job.description, "address": job.address, "town": job.town, "zip": job.zip, "postedBy": username}],
         "type": "merge"
     });
     const privResult = await axios({
@@ -181,15 +179,15 @@ async function loginUser(user) {
 
 
 $(function() {
+    renderNavbar(true);
     let user = {name:"Nick", pass:"pass123",email:"Nick@nick.com"};
     let job = {id:"2", title: "Test title 2", description:"Test description 2.", address:"sd", town:"sld", zip:"sdf"};
     // createUser(user);
     loginUser(user);
     // let currentUser = JSON.parse(localStorage.getItem('jwt'));
     // console.log(currentUser);
-    createJob('Nick', job);
+    // createJob('Nick', job);
     // console.log("did it!");
     $(document.body).on("click", "#submit", submitPostingEventHandler);
     // deleteJob('nick','1');
-    renderNavbar(true);
 });
