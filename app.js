@@ -298,11 +298,14 @@ async function deleteJob(username, id) {
     });
     const privResult = await axios({
         method:'DELETE',
-        url:'http://localhost:3000/private/jobs/'.concat(id)
+        url:'http://localhost:3000/private/jobs/'.concat(id),
+        headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))},
+
     });
     const userResult = await axios({
         method:'DELETE',
-        url:'http://localhost:3000/user/'.concat(username, '/postedJobs', id),
+        url:'http://localhost:3000/user/'.concat(username, '/postedJobs','[', id,']','/', id),
+        headers: {'Authorization': 'Bearer '.concat(localStorage.getItem('jwt'))},
     });
 }
 
@@ -389,7 +392,7 @@ function renderJobsPage(jobs, username) {
                 <a href="#" id="job-delete-${jobs[i].id}" class="card-footer-item">Delete</a>
             </footer>
         </div>`);
-        $("#job-edit".concat(jobs[i].id)).click(async function() {
+        $("#job-delete-".concat(jobs[i].id)).on("click", async function() {
             console.log('entered');
             await deleteJob(username, jobs[i].id);
         });
@@ -504,10 +507,21 @@ function toggleLogin() {
 let modalActive2 = false;
 function togglePostJob() {
     if (!modalActive) {
-        $("#loginModal").addClass("is-active");
+        $("#postModal").addClass("is-active");
         modalActive=true;
     } else {
-        $("#loginModal").removeClass("is-active");
+        $("#postModal").removeClass("is-active");
+        modalActive=false;
+        location.reload();
+    }
+}
+let modalActive3 = false;
+function toggleEditJob() {
+    if (!modalActive) {
+        $("#editModal").addClass("is-active");
+        modalActive=true;
+    } else {
+        $("#editModal").removeClass("is-active");
         modalActive=false;
         location.reload();
     }
@@ -570,75 +584,75 @@ $(async function() {
     $("#submit").click(togglePostJob);
     $("#okButton").click(togglePostJob);
     $(document.body).on("click", "#submit", submitPostingEventHandler);
-    // let search = $("#state");
-    // console.log(search);
-    // let stateList = $(`#state-list`)[0];
-    // console.log(stateList);
-    // let states = [ 'AL', 'AK', 'AS', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FM', 'FL', 'GA', 'GU', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MH', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'MP', 'OH', 'OK', 'OR', 'PW', 'PA', 'PR', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VI', 'VA', 'WA', 'WV', 'WI', 'WY' ];
-    // localStorage.setItem('key', JSON.stringify(states));
+    let search = $("#state")[0];
+    console.log(search);
+    let stateList = $(`#state-list`)[0];
+    console.log(stateList);
+    let states = [ 'AL', 'AK', 'AS', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FM', 'FL', 'GA', 'GU', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MH', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'MP', 'OH', 'OK', 'OR', 'PW', 'PA', 'PR', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VI', 'VA', 'WA', 'WV', 'WI', 'WY' ];
+    localStorage.setItem('key', JSON.stringify(states));
     
-    // let getList = function(txt){
-    //     return new Promise((resolve, reject)=>{
-    //         //use setTimeout with random value to show what can happen
-    //         let r = Math.floor(Math.random()*1000);
-    //         setTimeout((function(){
-    //             let t = '^' + this.toString();
-    //             console.log(t);
-    //             let pattern = new RegExp(t, 'i'); //starts with t
-    //             let terms = JSON.parse(localStorage.getItem('key'));
-    //             let matches = terms.filter(term => pattern.test(term));
-    //             resolve(matches);
-    //         }).bind(txt), r);
-    //     })
+    let getList = function(txt){
+        return new Promise((resolve, reject)=>{
+            //use setTimeout with random value to show what can happen
+            let r = Math.floor(Math.random()*1000);
+            setTimeout((function(){
+                let t = '^' + this.toString();
+                console.log(t);
+                let pattern = new RegExp(t, 'i'); //starts with t
+                let terms = JSON.parse(localStorage.getItem('key'));
+                let matches = terms.filter(term => pattern.test(term));
+                resolve(matches);
+            }).bind(txt), r);
+        })
+    }
+
+    let searchStates = _.debounce(function(event) {
+        
+        // let matches = states.filter(state=>{
+        //     const regex = new RegExp(`^${searchText}`, 'gi');
+        //     return state.match(regex);
+        // });
+        // if (searchText.length == 0 || searchText.length > 2) {
+        //     matches = [];
+        //     stateList.innerHTML = "";
+        // }
+
+        // _.debounce(outputHTML(matches), 1000);
+        let text = event.target.value;
+        getList(text)
+        .then((list) => {
+            stateList.innerHTML = '';
+            if(list.length == 0 || list.length == 59) {
+                stateList.innerHTML = '';
+            } else {
+                list.forEach(item => {
+                    let li = document.createElement('li');
+                    li.addEventListener('click', () => {
+                        console.log("clicked");
+                        state.value = item;
+                        stateList.innerHTML = '';
+                    })
+                    li.textContent = item;
+                    stateList.appendChild(li);
+                })
+            }
+        })
+        .catch(error => console.warn(err));
+    }, 300);
+
+    // const outputHTML = matches => {
+    //     if (matches.length > 0) {
+    //         const html = matches.map(match => 
+                // `<li>
+                //     <button id = #state-button class="button is-fullwidth">
+                //         ${match}
+                //     </button>
+                // </li>`
+    //         ).join("");
+    //         stateList.innerHTML = html;
+    //     }
     // }
 
-    // let searchStates = _.debounce(function(event) {
-        
-    //     // let matches = states.filter(state=>{
-    //     //     const regex = new RegExp(`^${searchText}`, 'gi');
-    //     //     return state.match(regex);
-    //     // });
-    //     // if (searchText.length == 0 || searchText.length > 2) {
-    //     //     matches = [];
-    //     //     stateList.innerHTML = "";
-    //     // }
-
-    //     // _.debounce(outputHTML(matches), 1000);
-    //     let text = event.target.value;
-    //     getList(text)
-    //     .then((list) => {
-    //         stateList.innerHTML = '';
-    //         if(list.length == 0 || list.length == 59) {
-    //             stateList.innerHTML = '';
-    //         } else {
-    //             list.forEach(item => {
-    //                 let li = document.createElement('li');
-    //                 li.addEventListener('click', () => {
-    //                     console.log("clicked");
-    //                     state.value = item;
-    //                     stateList.innerHTML = '';
-    //                 })
-    //                 li.textContent = item;
-    //                 stateList.appendChild(li);
-    //             })
-    //         }
-    //     })
-    //     .catch(error => console.warn(err));
-    // }, 300);
-
-    // // const outputHTML = matches => {
-    // //     if (matches.length > 0) {
-    // //         const html = matches.map(match => 
-    //             // `<li>
-    //             //     <button id = #state-button class="button is-fullwidth">
-    //             //         ${match}
-    //             //     </button>
-    //             // </li>`
-    // //         ).join("");
-    // //         stateList.innerHTML = html;
-    // //     }
-    // // }
-
-    // search.addEventListener('input', searchStates);
+    search.addEventListener('input', searchStates);
     
 });
