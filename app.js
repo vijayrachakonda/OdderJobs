@@ -191,24 +191,38 @@ async function submitPostingEventHandler(event) {
 
 // }
 
+
+
+const getCoordinates= async (job) => {
+    let address = job.address.split(" ");
+    console.log(address);
+    let formattedAddress = "";
+    address.forEach(function(word) {
+        formattedAddress += word;
+        formattedAddress += "+";
+    });
+    formattedAddress = formattedAddress.slice(0, formattedAddress.length - 1);
+    if (formattedAddress.includes('.')) {
+        formattedAddress = formattedAddress.slice(0, formattedAddress.length - 1);
+    }
+    formattedAddress += ",+";
+    job.town.split(" ").forEach(function(word) {
+        formattedAddress += word;
+        formattedAddress += "+";
+    });
+    formattedAddress = formattedAddress.slice(0, formattedAddress.length - 1);
+    formattedAddress += ",+";
+    formattedAddress += job.state;
+    console.log(formattedAddress);
+    let request = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${formattedAddress}&key=AIzaSyCi734gg8A9BUfEEggK7jiBTwxadBZJOMU`);
+    console.log(request);
+    return request.data.results[0].geometry.location;
+
+  }
+
+
 async function createJob(username, job) {
-    // let address = job.address.split(" ");
-    // let formattedAddress = "";
-    // address.forEach(function(word) {
-    //     formattedAddress += word;
-    //     formattedAddress += "+";
-    // });
-    // formattedAddress = formattedAddress.slice(0, formattedAddress.length - 1);
-    // formattedAddress += ",+";
-    // job.town.split(" ").forEach(function(word) {
-    //     formattedAddress += word;
-    //     formattedAddress += "+";
-    // });
-    // formattedAddress = formattedAddress.slice(0, formattedAddress.length - 1);
-    // formattedAddress += ",+";
-    // formattedAddress += job.state;
-    // console.log(formattedAddress);
-    // let coordinates = `https://maps.googleapis.com/maps/api/geocode/json?address=${formattedAddress}&key=AIzaSyCi734gg8A9BUfEEggK7jiBTwxadBZJOMU`;
+    let coordinates = await getCoordinates(job);
     if(job.description.length > 500) { job.description = job.description.slice(0, 500) };
     const pubResult = await pubRoot.post('http://localhost:3000/public/jobs', {
         "data": [{"id":job.id,
@@ -217,7 +231,8 @@ async function createJob(username, job) {
                   "address": job.address,
                   "state": job.state,
                   "town": job.town,
-                  "postedBy": username}],
+                  "postedBy": username,
+                  "coordinates": coordinates}],
         "type": "merge"
     });
     const privResult = await axios({
@@ -339,6 +354,18 @@ function toggleLogin() {
     }
 }
 
+let modalActive2 = false;
+function togglePostJob() {
+    if (!modalActive) {
+        $("#loginModal").addClass("is-active");
+        modalActive=true;
+    } else {
+        $("#loginModal").removeClass("is-active");
+        modalActive=false;
+        location.reload();
+    }
+}
+
 function logout() {
     localStorage.clear();
     window.location.replace("./index.html");
@@ -389,5 +416,7 @@ $(async function() {
     $("#cancelButton").click(toggleLogin);
     $("#submitButton").click(handleSubmitLoginForm);
     $("#logoutButton").click(logout);
+    $("#submit").click(togglePostJob);
+    $("#okButton").click(togglePostJob);
     $(document.body).on("click", "#submit", submitPostingEventHandler);
 });
