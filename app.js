@@ -74,16 +74,39 @@ async function submitPostingEventHandler(event) {
         description: $('#description').val(),
         address: $('#address').val(),
         town: $('#town').val(),
-        zip: $('#zip').val(),    
+        state: $('#state').val(),    
     }
     name = await getUser();
     createJob(name, job);
 
 }
 
+// const autoComplete = function(inp) {
+//     let states = [ 'AL', 'AK', 'AS', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FM', 'FL', 'GA', 'GU', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MH', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'MP', 'OH', 'OK', 'OR', 'PW', 'PA', 'PR', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VI', 'VA', 'WA', 'WV', 'WI', 'WY' ];
+
+
+// }
+
 async function createJob(username, job) {
+    // let address = job.address.split(" ");
+    // let formattedAddress = "";
+    // address.forEach(function(word) {
+    //     formattedAddress += word;
+    //     formattedAddress += "+";
+    // });
+    // formattedAddress = formattedAddress.slice(0, formattedAddress.length - 1);
+    // formattedAddress += ",+";
+    // job.town.split(" ").forEach(function(word) {
+    //     formattedAddress += word;
+    //     formattedAddress += "+";
+    // });
+    // formattedAddress = formattedAddress.slice(0, formattedAddress.length - 1);
+    // formattedAddress += ",+";
+    // formattedAddress += job.state;
+    // console.log(formattedAddress);
+    // let coordinates = `https://maps.googleapis.com/maps/api/geocode/json?address=${formattedAddress}&key=AIzaSyCi734gg8A9BUfEEggK7jiBTwxadBZJOMU`;
     const pubResult = await pubRoot.post('http://localhost:3000/public/jobs', {
-        "data": [{"id": job.id, "title":job.title,"description":job.description, "address": job.address, "town": job.town, "zip": job.zip, "postedBy": username}],
+        "data": [{"id": job.id, "title":job.title,"description":job.description, "address": job.address, "state": job.state, "postedBy": username}],
         "type": "merge"
     });
     const privResult = await axios({
@@ -133,7 +156,7 @@ async function createJob(username, job) {
 async function deleteJob(username, id) {
     const pubResult = await axios({
         method:'DELETE',
-        url:'http://localhost:3000/public/'.concat(username,'/',id),
+        url:'http://localhost:3000/public/jobs'.concat(username,'/',id),
     });
     const privResult = await axios({
         method:'DELETE',
